@@ -1,25 +1,27 @@
 {
   "expo": {
-    "name": "restaurant",
-    "slug": "restaurant",
+    "name": "Eatzly Restaurant",
+    "slug": "Eatzly-Restaurant",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icons/eatzly-restaurant.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/icons/eatzly-restaurant.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatzly.restaurant"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icons/eatzly-restaurant.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.eatzly.restaurant"
     },
     "web": {
       "favicon": "./assets/favicon.png"
