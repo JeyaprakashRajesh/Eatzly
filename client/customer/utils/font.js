@@ -7,6 +7,10 @@ export async function loadFonts(setFontsLoaded) {
       'montserrat-medium': require('../assets/fonts/Montserrat-Medium.ttf'),
       'montserrat-semibold': require('../assets/fonts/Montserrat-SemiBold.ttf'),
       'montserrat-bold': require('../assets/fonts/Montserrat-Bold.ttf'),
+      'baloo-regular' : require("../assets/fonts/BalooBhaijaan2-Regular.ttf"),
+      'baloo-medium' : require("../assets/fonts/BalooBhaijaan2-Medium.ttf"),
+      'baloo-bold' : require("../assets/fonts/BalooBhaijaan2-Bold.ttf"),
+      'baloo-SemiBold' : require("../assets/fonts/BalooBhaijaan2-SemiBold.ttf")
     });
     if (setFontsLoaded) { 
       setFontsLoaded(true);
