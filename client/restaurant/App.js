@@ -12,19 +12,22 @@ import { Provider } from "react-redux";
 import { store } from "@/redux/store";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "toastConfig";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function App() {
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <View style={styles.container}>
-            <StatusBar style="auto" />
-            <AppNavigator />
-            <Toast position="top" config={toastConfig} />
-          </View>
-        </NavigationContainer>
-      </SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <View style={styles.container}>
+              <StatusBar style="auto" />
+              <AppNavigator />
+              <Toast position="top" config={toastConfig} />
+            </View>
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </Provider>
   );
 }

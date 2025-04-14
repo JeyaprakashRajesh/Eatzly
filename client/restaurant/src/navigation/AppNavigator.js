@@ -1,5 +1,5 @@
-import { View, Text } from "react-native";
-import React, { useEffect } from "react";
+import { View, Text, ActivityIndicator } from "react-native";
+import React, { useEffect, useState } from "react";
 import TabNavigator from "./TabNavigator";
 import AuthStack from "./stacks/AuthStack";
 import useLoadFonts from "@/hooks/useLoadFonts";
@@ -11,6 +11,8 @@ export default function AppNavigator() {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const isFontsLoaded = useLoadFonts();
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
+  const restaurant = useSelector((state) => state.restaurant.restaurant);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -48,22 +50,18 @@ export default function AppNavigator() {
             },
           });
         }
-      } else {
-        dispatch({
-          type: "SET_AUTH",
-          payload: {
-            isAuthenticated: false,
-            id: null,
-            token: null,
-          },
-        });
       }
+      setLoading(false);
     };
     checkAuth();
   }, [dispatch, isAuthenticated]);
 
-  if (!isFontsLoaded) {
-    return null;
+  if (!isFontsLoaded || (isAuthenticated && !restaurant)) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
   }
 
   return isAuthenticated ? <TabNavigator /> : <AuthStack />;

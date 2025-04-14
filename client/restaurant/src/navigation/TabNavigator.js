@@ -43,7 +43,7 @@ export default function TabNavigator() {
           marginTop: 10,
         },
       }}
-      initialRouteName="Home"
+      initialRouteName="Orders"
     >
       <Tab.Screen
         name="Home"

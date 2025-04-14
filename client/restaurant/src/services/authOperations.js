@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_URL } from "@/constants/env";
-import  AsyncStorage  from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const register = async (formData, dispatch) => {
   try {
