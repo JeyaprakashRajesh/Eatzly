@@ -17,19 +17,24 @@ import {
 } from "react-native-responsive-screen";
 import { ArrowLeft, ArrowRight, Headphones } from "lucide-react-native";
 import { TextInput } from "react-native-gesture-handler";
+import { useDispatch } from "react-redux";
+import { register } from "@/services/authOperations";
+import Toast from "react-native-toast-message";
 
 export default function Register({ toggle }) {
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [isKeyboard, setIsKeyboard] = useState(false);
   const [step, setStep] = useState(1);
-  const [restaurantName, setRestaurantName] = useState("");
+  const [name, setName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [gstin, setGstin] = useState("");
   const [fssai, setFssai] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [pincode, setPincode] = useState("");
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -49,6 +54,37 @@ export default function Register({ toggle }) {
       keyboardDidHideListener.remove();
     };
   }, []);
+
+  const handleRegister = async () => {
+    const formData = {
+      phone,
+      email,
+      name,
+      ownerName,
+      gstin,
+      fssai,
+      city,
+      state,
+      pincode,
+    };
+
+    const response = await register(formData, dispatch);
+    if (response.success) {
+      Toast.show({
+        type: "success",
+        text1: "Registration Successful",
+        text2: "You have successfully registered your restaurant.",
+      });
+      toggle();
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Registration Failed",
+        text2: "Please check your details and try again.",
+      });
+      console.log(response.error);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -88,8 +124,8 @@ export default function Register({ toggle }) {
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Restaurant Name:</Text>
                   <TextInput
-                    value={restaurantName}
-                    onChangeText={setRestaurantName}
+                    value={name}
+                    onChangeText={setName}
                     style={styles.inputText}
                     placeholder="Enter restaurant name"
                     placeholderTextColor="#ccc"
@@ -123,8 +159,8 @@ export default function Register({ toggle }) {
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Phone Number:</Text>
                   <TextInput
-                    value={phoneNumber}
-                    onChangeText={setPhoneNumber}
+                    value={phone}
+                    onChangeText={setPhone}
                     style={styles.inputText}
                     keyboardType="numeric"
                     maxLength={10}
@@ -226,7 +262,7 @@ export default function Register({ toggle }) {
                   </View>
                   <TouchableOpacity
                     style={styles.loginButtonContainer}
-                    onPress={() => alert("Registering...")}
+                    onPress={handleRegister}
                   >
                     <Text style={styles.loginButtonText}>Register</Text>
                   </TouchableOpacity>
