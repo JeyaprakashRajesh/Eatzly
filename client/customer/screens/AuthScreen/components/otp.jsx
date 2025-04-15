@@ -11,9 +11,35 @@ import { primary, lightblack, lightgray } from "../../../utils/color";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAvoidingView, Platform } from "react-native";
 const { width, height } = Dimensions.get("window");
-import { ChevronLeft } from "lucide-react";
+import asyncStorage from "@react-native-async-storage/async-storage";
+import { BACKEND_URL } from "../../../utils/routes";
+import axios from "axios";
 
-export default function Otp({ navigation, phone, setPhone, Otp, setOtp, setIsAuthenticated }) {
+
+export default function Otp({ navigation, phone, setPhone, otp, setOtp, setIsAuthenticated }) {
+
+  async function handleOtpSubmit() {
+    console.log(phone, otp)
+    if (!otp || otp.length !== 6) {
+      
+      alert("Invalid OTP", "OTP must be 6 digits.");
+      return;
+    }
+
+    try {
+      const response = await axios.post(`http://192.168.1.4:8000/api/customer/otp`, {
+        "phone": phone, 
+        "otp": otp,
+      });
+
+      const { token, message } = response.data;
+      await asyncStorage.setItem("token", token);
+      setIsAuthenticated(true)
+
+    } catch (error) {
+      console.error(error);
+    }
+  }
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -41,7 +67,7 @@ export default function Otp({ navigation, phone, setPhone, Otp, setOtp, setIsAut
               style={styles.input}
               placeholder="on time password"
               placeholderTextColor={"gray"}
-              value={Otp}
+              value={otp}
               onChangeText={setOtp}
               keyboardType="phone-pad"
               maxLength={6}
@@ -52,9 +78,9 @@ export default function Otp({ navigation, phone, setPhone, Otp, setOtp, setIsAut
               returnKeyType="done"
             />
           </View>
-        </View>
+        </View> 
         <View style={styles.bottomContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => setIsAuthenticated(true)}>
+          <TouchableOpacity style={styles.button} onPress={() => handleOtpSubmit()}>
             <Text style={styles.buttonText}>LOGIN</Text>
           </TouchableOpacity>
         </View>

@@ -17,7 +17,7 @@ export default function App() {
   useEffect(() => {
     const checkToken = async () => {
       await loadFonts(setFontsLoaded);
-      const token = await AsyncStorage.getItem("authToken");
+      const token = await AsyncStorage.getItem("token");
       setIsAuthenticated(token ? true : false);
     };
     checkToken();

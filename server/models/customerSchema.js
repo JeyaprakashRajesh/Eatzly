@@ -2,15 +2,30 @@ const mongoose = require("mongoose");
 
 const CustomerSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, trim: true },
-    phone: { type: String, required: true, unique: true },
-    reservations: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "Reservation" },
-    ],
-    address:{
-        type:String,
+    tempPhone: {
+      type: Number
     },
+    username: { 
+      type: String, 
+      trim: true 
+    },
+    phone: {
+      type: Number,
+      unique: true,
+      sparse: true
+    },
+    otp: {
+      type: Number
+    },
+    reservations: [
+      { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "Reservation" 
+      }
+    ],
+    address: {
+      type: String
+    }
   },
   { timestamps: true }
 );
