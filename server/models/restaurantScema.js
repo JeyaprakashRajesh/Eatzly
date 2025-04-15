@@ -4,13 +4,22 @@ const restaurantSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String },
-    type: { type: String, enum: ["veg", "non-veg"], required: true },
-    location: {
-      address: { type: String, required: true },
-      coordinates: { lat: Number, lng: Number },
-    },
+    type: { type: String, enum: ["veg", "non-veg"] },
+    coordinates: { lat: Number, lng: Number },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
     phone: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    ownerName: { type: String, required: true },
+    gstin: { type: String, required: true },
+    pan: { type: String, required: true },
+    fssai: { type: String, required: true },
+    bankAccount: {
+      accountNumber: { type: String },
+      ifscCode: { type: String },
+      accountHolderName: { type: String },
+    },
     menu: { type: mongoose.Schema.Types.ObjectId, ref: "Menu" },
     tables: [{ type: mongoose.Schema.Types.ObjectId, ref: "Table" }],
     employees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -52,6 +61,10 @@ const restaurantSchema = new mongoose.Schema(
     },
     tags: [{ type: String }],
     website: { type: String },
+    otp: {
+      code: { type: String },
+      createdAt: { type: Date },
+    },
   },
   { timestamps: true }
 );
