@@ -16,7 +16,7 @@ export default function AuthScreen({ setIsAuthenticated }) {
           {(props) => <Phone {...props} phone={phone} setPhone={setPhone} />}
         </Stack.Screen>
         <Stack.Screen name="Otp">
-          {(props) => <Otp {...props} phone={phone} setPhone={setPhone} Otp={otpValue} setOtp={setOtpValue} setIsAuthenticated={setIsAuthenticated} />}
+          {(props) => <Otp {...props} phone={phone} setPhone={setPhone} otp={otpValue} setOtp={setOtpValue} setIsAuthenticated={setIsAuthenticated} />}
         </Stack.Screen>
       </Stack.Navigator>
     );

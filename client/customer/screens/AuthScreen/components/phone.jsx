@@ -11,8 +11,33 @@ import { primary, lightblack, lightgray } from "../../../utils/color";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAvoidingView, Platform } from "react-native";
 const { width, height } = Dimensions.get("window");
+import axios from "axios";
+import { BACKEND_URL } from "../../../utils/routes";
 
 export default function Phone({ navigation, phone, setPhone}) {
+
+  async function handleGetOtp() {
+    if (phone.length !== 10) {
+      alert("Invalid Phone Number", "Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    try {
+
+      const response = await axios.post(`${BACKEND_URL}/api/customer/phone`, { "phone": phone });
+
+      if (response.status === 200) {
+        navigation.navigate("Otp")
+      } else {
+        alert("Error", "Failed to send OTP. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error.response?.data || error.message);
+      alert("Network Error", error?.response?.data?.message || "Could not connect to server. Please check your connection.");
+    }
+    
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topContainer}>
@@ -51,7 +76,7 @@ export default function Phone({ navigation, phone, setPhone}) {
           <View style={styles.buttonContianer}>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => navigation.navigate("Otp")}
+              onPress={() => handleGetOtp()}
             >
               <Text style={styles.buttonText}>SUBMIT</Text>
             </TouchableOpacity>
