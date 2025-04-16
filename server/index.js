@@ -20,7 +20,5 @@ app.use("/api/customer", require("./routes/customerRoutes"));
 app.use("/api/kitchen", require("./routes/kitchenRoutes"));
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`); 
+  console.log(`Server is running on port ${port}`);
 });
-
- 

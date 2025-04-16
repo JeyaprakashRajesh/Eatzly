@@ -7,26 +7,32 @@ import { Image } from "react-native";
 
 import HomeIcon from "../../assets/icons/flowbite--home-solid.png";
 import OrdersIcon from "../../assets/icons/material-symbols--restaurant-menu.png";
-import MenuIcon from "../../assets/icons/bxs--food-menu.png";
+import MenuIcon from "../../assets/icons/garden--tray-book-26.png";
 import SettingsIcon from "../../assets/icons/ph--gear-six-fill.png";
+import TableIcon from "../../assets/icons/material-symbols--table-bar.png";
+
 import colors from "@/constants/colors";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import Tables from "@/screens/main/Tables";
 
 const Tab = createBottomTabNavigator();
 
-const TabIcon = ({ source, color }) => (
+const TabIcon = ({ source, color, style }) => (
   <Image
     source={source}
-    style={{
-      width: wp("3.5%"),
-      height: hp("3.5%"),
-      tintColor: color,
-      aspectRatio: 1,
-      resizeMode: "contain",
-    }}
+    style={[
+      {
+        width: wp("3.5%"),
+        height: hp("3.5%"),
+        tintColor: color,
+        aspectRatio: 1,
+        resizeMode: "contain",
+      },
+      style,
+    ]}
   />
 );
 
@@ -43,7 +49,7 @@ export default function TabNavigator() {
           marginTop: 10,
         },
       }}
-      initialRouteName="Orders"
+      initialRouteName="Home"
     >
       <Tab.Screen
         name="Home"
@@ -64,11 +70,30 @@ export default function TabNavigator() {
         }}
       />
       <Tab.Screen
+        name="Tables"
+        component={Tables}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon source={TableIcon} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="Menu"
         component={Menu}
         options={{
           tabBarIcon: ({ color }) => (
-            <TabIcon source={MenuIcon} color={color} />
+            <TabIcon
+              source={MenuIcon}
+              color={color}
+              style={{
+                width: wp("3.1%"),
+                height: hp("3.1%"),
+                tintColor: color,
+                aspectRatio: 1,
+                resizeMode: "contain",
+              }}
+            />
           ),
         }}
       />
@@ -77,7 +102,17 @@ export default function TabNavigator() {
         component={Settings}
         options={{
           tabBarIcon: ({ color }) => (
-            <TabIcon source={SettingsIcon} color={color} />
+            <TabIcon
+              source={SettingsIcon}
+              color={color}
+              style={{
+                width: wp("3.5%"),
+                height: hp("3.5%"),
+                tintColor: color,
+                aspectRatio: 1,
+                resizeMode: "contain",
+              }}
+            />
           ),
         }}
       />

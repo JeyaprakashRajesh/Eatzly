@@ -84,9 +84,6 @@ const Orders = () => {
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.container}>
       <View
-        onTouchEnd={() => {
-          Keyboard.dismiss();
-        }}
         style={styles.header}
       >
         <Text style={styles.logoText}>Orders</Text>
