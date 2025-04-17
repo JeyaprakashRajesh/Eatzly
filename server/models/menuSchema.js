@@ -2,7 +2,11 @@ const mongoose = require("mongoose");
 
 const menuSchema = new mongoose.Schema(
   {
-    restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant", required: true },
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      required: true,
+    },
     items: [
       {
         name: { type: String, required: true },
@@ -12,8 +16,8 @@ const menuSchema = new mongoose.Schema(
         image: { type: String },
         available: { type: Boolean, default: true },
         type: { type: String, enum: ["veg", "non-veg"], required: true },
-      }
-    ]
+      },
+    ],
   },
   { timestamps: true }
 );

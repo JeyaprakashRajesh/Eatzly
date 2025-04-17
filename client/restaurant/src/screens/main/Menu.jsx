@@ -1,76 +1,173 @@
-import { View, Text, StyleSheet, Image } from "react-native";
-import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  RefreshControlBase,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+} from "react-native";
+import { KeyboardAvoidingView, Platform } from "react-native";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import colors from "@/constants/colors";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { ArrowDownUp, Plus, Search } from "lucide-react-native";
-import { FlatList, TextInput } from "react-native-gesture-handler";
+import { ArrowDownUp, Plus, Search, X } from "lucide-react-native";
+import {
+  FlatList,
+  RefreshControl,
+  TextInput,
+} from "react-native-gesture-handler";
+import { Picker } from "@react-native-picker/picker";
+import DropDownPicker from "react-native-dropdown-picker";
 import VegIcon from "../../../assets/icons/veg-icon.png";
 import NonVegIcon from "../../../assets/icons/nonveg-icon.png";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  handleAddMenuItem,
+  handleDeleteMenuItem,
+  handleGetAllMenus,
+  handleUpdateMenuItem,
+} from "@/services/restaurantOperations";
+import Toast from "react-native-toast-message";
 
 export default function Menu() {
+  const dispatch = useDispatch();
+  const { id, token } = useSelector((state) => state.auth);
+  const menus = useSelector((state) => state.restaurant.menus);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const menu = [
-    {
-      image:
-        "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=900&auto=format&fit=crop&q=60",
-      name: "Chicken Biriyani",
-      type: "non-veg",
-      price: 210,
-    },
-    {
-      image:
-        "https://www.allrecipes.com/thmb/qgfQljqLcHe4Zr_SMWzsB2Gd6E8=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/AR-85469-indian-chapati-bread-DDMFS-4x3-d2692c11f56b4546b35dccd42ace1958.jpg",
-      name: "Chapathi",
-      type: "veg",
-      price: 20,
-    },
-    {
-      image:
-        "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      name: "Masala Dosa",
-      type: "veg",
-      price: 60,
-    },
-    {
-      image:
-        "https://images.unsplash.com/photo-1701579231378-3726490a407b?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      name: "Paneer Butter Masala",
-      type: "veg",
-      price: 180,
-    },
-    {
-      image:
-        "https://images.unsplash.com/photo-1606843046080-45bf7a23c39f?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      name: "Mutton Curry",
-      type: "non-veg",
-      price: 240,
-    },
-    {
-      image:
-        "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      name: "Idli",
-      type: "veg",
-      price: 30,
-    },
-    {
-      image:
-        "https://images.unsplash.com/photo-1656389863341-1dfd38ee6edc?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      name: "Fish Fry",
-      type: "non-veg",
-      price: 150,
-    },
-    {
-      image:
-        "https://images.moneycontrol.com/static-mcnews/2021/04/paratha_shutterstock_1641709639.jpg?impolicy=website&width=1600&height=900",
-      name: "Parotta",
-      type: "veg",
-      price: 15,
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [editItemInput, setEditItemInput] = useState({
+    name: "",
+    price: "",
+    type: "",
+    category: "",
+    image: "",
+  });
+
+  const [menuItem, setMenuItem] = useState({
+    name: "",
+    price: "",
+    type: "",
+    category: "",
+    image: "",
+  });
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryItems, setCategoryItems] = useState([
+    { label: "Starters", value: "starters" },
+    { label: "Main Course", value: "main_course" },
+    { label: "Desserts", value: "desserts" },
+    { label: "Drinks", value: "drinks" },
+    { label: "Combos", value: "combos" },
+    { label: "Breakfast", value: "breakfast" },
+  ]);
+  const [typeOpen, setTypeOpen] = useState(false);
+  const [typeItems, setTypeItems] = useState([
+    { label: "Veg", value: "veg" },
+    { label: "Non-Veg", value: "non-veg" },
+  ]);
+
+  const fetchAllMenus = async () => {
+    try {
+      await handleGetAllMenus(id, token, dispatch);
+    } catch (error) {
+      console.log(error);
     }
-  ];
+  };
+
+  const handleEditItem = (item) => {
+    setEditingItem(item);
+    setEditItemInput({
+      name: item.name || "",
+      price: item.price?.toString() || "",
+      type: item.type || "",
+      category: item.category || "",
+      image: item.image || "",
+    });
+    setEditModalVisible(true);
+  };
+
+  useEffect(() => {
+    fetchAllMenus();
+  }, []);
+
+  const addMenuItem = async () => {
+    const response = await handleAddMenuItem(id, token, menuItem, dispatch);
+    if (response?.success) {
+      Toast.show({
+        type: "success",
+        text1: "Menu Item Added Successfully",
+      });
+      setModalVisible(false);
+      setMenuItem({
+        name: "",
+        price: "",
+        type: "",
+        category: "",
+        image: "",
+      });
+      setCategoryOpen(false);
+      fetchAllMenus();
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error adding menu item",
+      });
+      console.log(response.message);
+    }
+  };
+
+  const updateMenuItem = async (e) => {
+    const mid = editingItem._id;
+    const response = await handleUpdateMenuItem(
+      id,
+      token,
+      mid,
+      editItemInput,
+      dispatch
+    );
+    if (response?.success) {
+      Toast.show({
+        type: "success",
+        text1: "Menu Item Updated Successfully",
+      });
+      setEditModalVisible(false);
+      setEditingItem(null);
+      fetchAllMenus();
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error updating menu item",
+      });
+      console.log(response.message);
+    }
+  };
+
+  const deleteMenuItem = async (mid) => {
+    const response = await handleDeleteMenuItem(id, token, mid, dispatch);
+    if (response?.success) {
+      Toast.show({
+        type: "success",
+        text1: "Menu Item Deleted Successfully",
+      });
+      fetchAllMenus();
+      setEditModalVisible(false);
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error deleting menu item",
+      });
+      console.log(response.message);
+    }
+  };
+
   return (
     <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
       <View style={styles.header}>
@@ -102,19 +199,51 @@ export default function Menu() {
         </View>
         <FlatList
           key={`flatlist-${2}`}
-          data={menu.filter((item) =>
-            item.name.toLowerCase().includes(searchQuery.toLowerCase())
+          data={menus?.filter(
+            (item) =>
+              item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              item.price.toString().includes(searchQuery)
           )}
           style={{
             marginTop: hp("1.5%"),
           }}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={() => {
+                fetchAllMenus();
+              }}
+            />
+          }
           showsVerticalScrollIndicator={false}
           numColumns={2}
+          ListEmptyComponent={
+            <View style={{ marginTop: hp("25%"), alignSelf: "center" }}>
+              <Text
+                style={{
+                  fontSize: hp("2%"),
+                  fontFamily: "Montserrat-MediumItalic",
+                  color: "#ccc",
+                }}
+              >
+                No Menus Found
+              </Text>
+            </View>
+          }
           columnWrapperStyle={{ justifyContent: "space-between" }}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
             <View style={styles.menuCard}>
-              <Image source={{ uri: item.image }} style={styles.menuImage} />
+              <Image
+                source={{
+                  uri:
+                    item?.image?.trim() !== ""
+                      ? item.image
+                      : "https://placehold.co/600x400.png?text=No%20Image&font=montserrat",
+                }}
+                style={styles.menuImage}
+                resizeMode="cover"
+              />
               <View style={styles.row}>
                 <Text style={styles.menuTitle}>{item.name}</Text>
                 <Image
@@ -124,15 +253,353 @@ export default function Menu() {
               </View>
               <View style={styles.row}>
                 <Text style={styles.price}>₹{item.price}</Text>
-                <Text style={styles.edit}>Edit</Text>
+                <Text style={styles.edit} onPress={() => handleEditItem(item)}>
+                  View
+                </Text>
               </View>
             </View>
           )}
         />
       </View>
-      <View style={styles.addButtonContainer}>
+      <TouchableOpacity
+        style={styles.addButtonContainer}
+        onPress={() => setModalVisible(true)}
+      >
         <Plus size={hp("3.5%")} color={"#fff"} />
-      </View>
+      </TouchableOpacity>
+      <Modal
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.addMenuItemContainer}>
+          <View style={styles.addMenuItemHeader}>
+            <Text style={styles.addMenuItemHeaderText}>Add Menu Item</Text>
+            <X
+              onPress={() => {
+                setModalVisible(false);
+                setMenuItem({
+                  name: "",
+                  price: "",
+                  type: "",
+                  category: "",
+                  image: "",
+                });
+                setCategoryOpen(false);
+              }}
+              size={hp("3%")}
+              color={"#626262"}
+            />
+          </View>
+          <View style={styles.addMenuItemContent}>
+            <View style={styles.addMenuItemInputContainer}>
+              <Text style={styles.addMenuItemInputLabel}>Name</Text>
+              <TextInput
+                style={styles.addMenuItemInput}
+                placeholder="Enter menu item name . . ."
+                value={menuItem.name}
+                onChangeText={(text) =>
+                  setMenuItem({ ...menuItem, name: text })
+                }
+                placeholderTextColor={"#ccc"}
+              />
+            </View>
+
+            <View style={styles.addMenuItemInputContainer}>
+              <Text style={styles.addMenuItemInputLabel}>Price</Text>
+              <TextInput
+                style={styles.addMenuItemInput}
+                placeholder="Enter menu item price . . ."
+                value={menuItem.price}
+                onChangeText={(text) => {
+                  if (/^\d*\.?\d*$/.test(text)) {
+                    setMenuItem({ ...menuItem, price: text });
+                  }
+                }}
+                keyboardType="numeric"
+                returnKeyType="done"
+                blurOnSubmit={true}
+                onSubmitEditing={() => Keyboard.dismiss()}
+                placeholderTextColor={"#ccc"}
+              />
+            </View>
+
+            <View style={styles.addMenuItemInputContainer}>
+              <Text style={styles.addMenuItemInputLabel}>Type</Text>
+              <DropDownPicker
+                placeholder="Select Type"
+                zIndex={2}
+                open={typeOpen}
+                value={menuItem.type}
+                items={typeItems}
+                setOpen={setTypeOpen}
+                setValue={(callback) =>
+                  setMenuItem((prev) => ({
+                    ...prev,
+                    type: callback(prev.type),
+                  }))
+                }
+                setItems={setTypeItems}
+                style={{
+                  fontSize: hp("1.8%"),
+                  fontFamily: "Montserrat-Medium",
+                  backgroundColor: "#f2f2f2",
+                  borderWidth: 0,
+                }}
+                textStyle={{
+                  fontSize: hp("1.8%"),
+                  fontFamily: "Montserrat-Medium",
+                  color: "#333",
+                }}
+                dropDownContainerStyle={{
+                  backgroundColor: "#f2f2f2",
+                  fontSize: hp("1.8%"),
+                  fontFamily: "Montserrat-Medium",
+                  borderColor: "#ccc",
+                }}
+                placeholderStyle={{
+                  color: "#ccc",
+                  fontSize: hp("1.8%"),
+                  fontFamily: "Montserrat-Medium",
+                }}
+              />
+            </View>
+
+            <View style={styles.addMenuItemInputContainer}>
+              <Text style={styles.addMenuItemInputLabel}>Category</Text>
+              <DropDownPicker
+                placeholder="Select Category"
+                zIndex={1}
+                open={categoryOpen}
+                value={menuItem.category}
+                items={categoryItems}
+                setOpen={setCategoryOpen}
+                setValue={(callback) =>
+                  setMenuItem((prev) => ({
+                    ...prev,
+                    category: callback(prev.category),
+                  }))
+                }
+                setItems={setCategoryItems}
+                style={{
+                  fontSize: hp("1.8%"),
+                  fontFamily: "Montserrat-Medium",
+                  backgroundColor: "#f2f2f2",
+                  borderWidth: 0,
+                }}
+                textStyle={{
+                  fontSize: hp("1.8%"),
+                  fontFamily: "Montserrat-Medium",
+                  color: "#333",
+                }}
+                dropDownContainerStyle={{
+                  backgroundColor: "#f2f2f2",
+                  fontSize: hp("1.8%"),
+                  fontFamily: "Montserrat-Medium",
+                  borderColor: "#ccc",
+                }}
+                placeholderStyle={{
+                  color: "#ccc",
+                  fontSize: hp("1.8%"),
+                  fontFamily: "Montserrat-Medium",
+                }}
+              />
+            </View>
+
+            <View style={styles.addMenuItemInputContainer}>
+              <Text style={styles.addMenuItemInputLabel}>Image</Text>
+              <TextInput
+                style={styles.addMenuItemInput}
+                placeholder="Enter menu item image link . . ."
+                value={menuItem.image}
+                onChangeText={(text) =>
+                  setMenuItem({ ...menuItem, image: text })
+                }
+                placeholderTextColor={"#ccc"}
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.addMenuItemButton}
+              onPress={addMenuItem}
+            >
+              <Text style={styles.addMenuItemButtonText}>Add Item</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.addMenuItemContainer}>
+          <View style={styles.addMenuItemHeader}>
+            <Text style={styles.addMenuItemHeaderText}>Edit Menu Item</Text>
+            <X
+              onPress={() => {
+                setEditModalVisible(false);
+                setEditingItem(null);
+                setEditItemInput({
+                  name: "",
+                  price: "",
+                  type: "",
+                  category: "",
+                  image: "",
+                });
+              }}
+              size={hp("3%")}
+              color={"#626262"}
+            />
+          </View>
+          {editModalVisible && (
+            <View style={styles.addMenuItemContent}>
+              <View style={styles.addMenuItemInputContainer}>
+                <Text style={styles.addMenuItemInputLabel}>Name</Text>
+                <TextInput
+                  style={styles.addMenuItemInput}
+                  value={editItemInput.name}
+                  onChangeText={(text) =>
+                    setEditItemInput((prev) => ({ ...prev, name: text }))
+                  }
+                  placeholderTextColor={"#ccc"}
+                />
+              </View>
+              <View style={styles.addMenuItemInputContainer}>
+                <Text style={styles.addMenuItemInputLabel}>Price</Text>
+                <TextInput
+                  style={styles.addMenuItemInput}
+                  value={editItemInput.price}
+                  onChangeText={(text) => {
+                    if (/^\d*\.?\d*$/.test(text)) {
+                      setEditItemInput((prev) => ({ ...prev, price: text }));
+                    }
+                  }}
+                  keyboardType="numeric"
+                  returnKeyType="done"
+                  blurOnSubmit={true}
+                  onSubmitEditing={() => Keyboard.dismiss()}
+                  placeholderTextColor={"#ccc"}
+                />
+              </View>
+              <View style={styles.addMenuItemInputContainer}>
+                <Text style={styles.addMenuItemInputLabel}>Type</Text>
+                <DropDownPicker
+                  placeholder="Select Type"
+                  zIndex={2}
+                  open={typeOpen}
+                  value={editItemInput.type}
+                  items={typeItems}
+                  setOpen={setTypeOpen}
+                  setValue={(callback) =>
+                    setEditItemInput((prev) => ({
+                      ...prev,
+                      type: callback(prev.type),
+                    }))
+                  }
+                  setItems={setTypeItems}
+                  style={[
+                    styles.addMenuItemInput,
+                    {
+                      borderWidth: 0,
+                    },
+                  ]}
+                  textStyle={{
+                    fontSize: hp("1.8%"),
+                    fontFamily: "Montserrat-Medium",
+                    color: "#333",
+                  }}
+                  dropDownContainerStyle={{
+                    backgroundColor: "#f2f2f2",
+                    borderColor: "#ccc",
+                  }}
+                  placeholderStyle={{
+                    color: "#ccc",
+                    fontSize: hp("1.8%"),
+                    fontFamily: "Montserrat-Medium",
+                  }}
+                />
+              </View>
+              <View style={styles.addMenuItemInputContainer}>
+                <Text style={styles.addMenuItemInputLabel}>Category</Text>
+                <DropDownPicker
+                  placeholder="Select Category"
+                  zIndex={1}
+                  open={categoryOpen}
+                  value={editItemInput.category}
+                  items={categoryItems}
+                  setOpen={setCategoryOpen}
+                  setValue={(callback) =>
+                    setEditItemInput((prev) => ({
+                      ...prev,
+                      category: callback(prev.category),
+                    }))
+                  }
+                  setItems={setCategoryItems}
+                  style={[
+                    styles.addMenuItemInput,
+                    {
+                      borderWidth: 0,
+                    },
+                  ]}
+                  textStyle={{
+                    fontSize: hp("1.8%"),
+                    fontFamily: "Montserrat-Medium",
+                    color: "#333",
+                  }}
+                  dropDownContainerStyle={{
+                    backgroundColor: "#f2f2f2",
+                    borderColor: "#ccc",
+                  }}
+                  placeholderStyle={{
+                    color: "#ccc",
+                    fontSize: hp("1.8%"),
+                    fontFamily: "Montserrat-Medium",
+                  }}
+                />
+              </View>
+              <View style={styles.addMenuItemInputContainer}>
+                <Text style={styles.addMenuItemInputLabel}>Image</Text>
+                <TextInput
+                  style={styles.addMenuItemInput}
+                  value={editItemInput.image}
+                  onChangeText={(text) =>
+                    setEditItemInput((prev) => ({ ...prev, image: text }))
+                  }
+                  placeholder="Enter image URL"
+                  placeholderTextColor={"#ccc"}
+                />
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  gap: wp("5%"),
+                }}
+              >
+                <TouchableOpacity
+                  style={styles.addMenuItemButton}
+                  onPress={() => {
+                    updateMenuItem(editingItem);
+                  }}
+                >
+                  <Text style={styles.addMenuItemButtonText}>Save Changes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.addMenuItemButton,
+                    { backgroundColor: "#ff6347" },
+                  ]}
+                  onPress={() => {
+                    deleteMenuItem(editingItem._id);
+                  }}
+                >
+                  <Text style={styles.addMenuItemButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -205,7 +672,7 @@ const styles = StyleSheet.create({
     marginBottom: hp("2%"),
   },
   menuTitle: {
-    fontSize: hp("2%"),
+    fontSize: hp("1.7%"),
     fontFamily: "Montserrat-SemiBold",
     color: "#000",
   },
@@ -216,12 +683,12 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   price: {
-    fontSize: hp("1.8%"),
+    fontSize: hp("1.7%"),
     color: "#000",
     fontFamily: "Montserrat-Medium",
   },
   edit: {
-    fontSize: hp("1.8%"),
+    fontSize: hp("1.7%"),
     color: "#27A8A8",
     fontFamily: "Montserrat-SemiBold",
   },
@@ -259,7 +726,7 @@ const styles = StyleSheet.create({
     height: hp("4%"),
     aspectRatio: 1,
   },
-  addButtonContainer:{
+  addButtonContainer: {
     position: "absolute",
     bottom: hp("2%"),
     right: wp("3.5%"),
@@ -270,5 +737,71 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 3,
-  }
+  },
+  addMenuItemContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: wp("5%"),
+  },
+  addMenuItemHeader: {
+    backgroundColor: "#fff",
+    width: "100%",
+    padding: hp("2%"),
+    borderTopLeftRadius: hp("1.5%"),
+    borderTopRightRadius: hp("1.5%"),
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  addMenuItemHeaderText: {
+    fontFamily: "Montserrat-Bold",
+    fontSize: hp("2.3%"),
+    color: "#000",
+  },
+  addMenuItemContent: {
+    backgroundColor: "#fff",
+    width: "100%",
+    padding: hp("2.5%"),
+    borderBottomLeftRadius: hp("1.5%"),
+    borderBottomRightRadius: hp("1.5%"),
+    justifyContent: "space-between",
+  },
+  addMenuItemInputContainer: {
+    marginBottom: hp("2.5%"),
+  },
+  addMenuItemInputLabel: {
+    fontFamily: "Montserrat-SemiBold",
+    fontSize: hp("1.9%"),
+    color: "#000",
+    marginBottom: hp("1.2%"),
+  },
+  addMenuItemInput: {
+    backgroundColor: "#f2f2f2",
+    borderRadius: hp("1%"),
+    paddingHorizontal: wp("4%"),
+    paddingVertical: hp("1.5%"),
+    fontSize: hp("1.8%"),
+    fontFamily: "Montserrat-Medium",
+    color: "#333",
+  },
+  addMenuItemButton: {
+    backgroundColor: "#27A8A8",
+    borderRadius: hp("1%"),
+    paddingHorizontal: wp("4%"),
+    paddingVertical: hp("1.5%"),
+    fontSize: hp("1.8%"),
+    fontFamily: "Montserrat-Medium",
+    color: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: hp("2%"),
+    flex: 1,
+  },
+  addMenuItemButtonText: {
+    fontFamily: "Montserrat-SemiBold",
+    fontSize: hp("1.8%"),
+    color: "#fff",
+  },
 });

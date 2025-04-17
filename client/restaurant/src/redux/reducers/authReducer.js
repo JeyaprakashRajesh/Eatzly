@@ -12,7 +12,7 @@ export default authReducer = (state = initialState, action) => {
       return {
         ...state,
         isAuthenticated: action.payload.isAuthenticated,
-        id: action.payload._rid,
+        id: action.payload.id,
         token: action.payload.token,
       };
     case "SET_AUTH_ERROR":

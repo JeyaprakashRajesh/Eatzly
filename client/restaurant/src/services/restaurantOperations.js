@@ -24,3 +24,115 @@ export const getRestaurant = async (token, dispatch) => {
     throw error;
   }
 };
+
+export const handleGetAllMenus = async (restaurantId, token, dispatch) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/api/restaurant/menus?restaurantId=${restaurantId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.status === 200) {
+      dispatch({
+        type: "SET_MENUS",
+        payload: response.data.menu,
+      });
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const handleAddMenuItem = async (
+  restaurantId,
+  token,
+  item,
+  dispatch
+) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/restaurant/menu/add`,
+      {
+        restaurantId,
+        item,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.status === 200 || response.status === 201) {
+      handleGetAllMenus(restaurantId, token, dispatch);
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const handleUpdateMenuItem = async (
+  restaurantId,
+  token,
+  itemId,
+  updatedItem,
+  dispatch
+) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/restaurant/menu/update`,
+      {
+        restaurantId,
+        itemId,
+        updatedItem,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.status === 200) {
+      handleGetAllMenus(restaurantId, token, dispatch);
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const handleDeleteMenuItem = async (
+  restaurantId,
+  token,
+  itemId,
+  dispatch
+) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/api/restaurant/menu/delete`,
+      {
+        data: {
+          restaurantId,
+          itemId,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.status === 200) {
+      handleGetAllMenus(restaurantId, token, dispatch);
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};

@@ -2,6 +2,9 @@ const initialState = {
   restaurant: null,
   loading: false,
   error: null,
+  tables: [],
+  menus: [],
+  orders: [],
 };
 
 export default restaurantReducer = (state = initialState, action) => {
@@ -20,6 +23,21 @@ export default restaurantReducer = (state = initialState, action) => {
       return {
         ...state,
         restaurantLoading: action.payload,
+      };
+    case "SET_TABLES":
+      return {
+        ...state,
+        tables: action.payload,
+      };
+    case "SET_MENUS":
+      return {
+        ...state,
+        menus: action.payload,
+      };
+    case "SET_ORDERS":
+      return {
+        ...state,
+        orders: action.payload,
       };
     default:
       return state;

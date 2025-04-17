@@ -1,4 +1,7 @@
 const Restaurants = require("../models/restaurantScema");
+const Menu = require("../models/menuSchema");
+const Table = require("../models/tableSchema");
+
 const { generateToken } = require("../utils/jwt");
 
 const register = async (req, res) => {
@@ -199,8 +202,372 @@ const getRestaurant = async (req, res) => {
   }
 };
 
+const addMenuItem = async (req, res) => {
+  try {
+    const { restaurantId, item } = req.body;
+
+    if (
+      !restaurantId ||
+      !item ||
+      !item.name ||
+      !item.price ||
+      !item.category ||
+      !item.type
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields for menu item",
+      });
+    }
+
+    let menu = await Menu.findOne({ restaurantId });
+
+    if (!menu) {
+      menu = new Menu({
+        restaurantId,
+        items: [item],
+      });
+    } else {
+      menu.items.push(item);
+    }
+
+    await menu.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Menu item added successfully",
+      menu,
+    });
+  } catch (error) {
+    console.error("Add Menu Item error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while adding menu item",
+    });
+  }
+};
+
+const deleteMenuItem = async (req, res) => {
+  try {
+    const { restaurantId, itemId } = req.body;
+
+    if (!restaurantId || !itemId) {
+      return res.status(400).json({
+        success: false,
+        message: "restaurantId and itemId are required",
+      });
+    }
+
+    const menu = await Menu.findOne({ restaurantId });
+
+    if (!menu) {
+      return res.status(404).json({
+        success: false,
+        message: "Menu not found for the given restaurant",
+      });
+    }
+
+    const initialLength = menu.items.length;
+    menu.items = menu.items.filter((item) => item._id.toString() !== itemId);
+
+    if (menu.items.length === initialLength) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found in the menu",
+      });
+    }
+
+    await menu.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Menu item deleted successfully",
+      menu,
+    });
+  } catch (error) {
+    console.error("Delete Menu Item error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while deleting menu item",
+    });
+  }
+};
+
+const updateMenuItem = async (req, res) => {
+  try {
+    const { restaurantId, itemId, updatedItem } = req.body;
+
+    if (!restaurantId || !itemId || !updatedItem) {
+      return res.status(400).json({
+        success: false,
+        message: "restaurantId, itemId and updated data are required",
+      });
+    }
+
+    const menu = await Menu.findOne({ restaurantId });
+
+    if (!menu) {
+      return res.status(404).json({
+        success: false,
+        message: "Menu not found for the given restaurant",
+      });
+    }
+
+    const itemIndex = menu.items.findIndex(
+      (item) => item._id.toString() === itemId
+    );
+    if (itemIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Menu item not found",
+      });
+    }
+
+    menu.items[itemIndex] = { ...menu.items[itemIndex]._doc, ...updatedItem };
+    await menu.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Menu item updated successfully",
+      menu,
+    });
+  } catch (error) {
+    console.error("Update Menu Item error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating menu item",
+    });
+  }
+};
+
+const addTable = async (req, res) => {
+  try {
+    const { restaurantId, tableName, capacity } = req.body;
+
+    if (!restaurantId || !tableName || tableName.length !== 1 || !capacity) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "restaurantId, capacity, and a single character tableName are required",
+      });
+    }
+
+    const existing = await Table.findOne({ restaurantId, tableName });
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: "Table already exists for this restaurant",
+      });
+    }
+
+    const newTable = new Table({ restaurantId, tableName, capacity });
+    await newTable.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Table added successfully",
+      table: newTable,
+    });
+  } catch (err) {
+    console.error("Add Table error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const deleteTable = async (req, res) => {
+  try {
+    const { tableId } = req.body;
+
+    const deleted = await Table.findByIdAndDelete(tableId);
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Table deleted successfully",
+    });
+  } catch (err) {
+    console.error("Delete Table error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const updateTable = async (req, res) => {
+  try {
+    const { tableId } = req.body;
+    const updates = req.body;
+
+    const updatedTable = await Table.findByIdAndUpdate(tableId, updates, {
+      new: true,
+    });
+
+    if (!updatedTable) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Table updated successfully",
+      table: updatedTable,
+    });
+  } catch (err) {
+    console.error("Update Table error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const getTableDetails = async (req, res) => {
+  try {
+    const { tableId } = req.query;
+
+    if (!tableId) {
+      return res.status(400).json({
+        success: false,
+        message: "Table ID is required",
+      });
+    }
+
+    const table = await Table.findById(tableId).populate("restaurantId");
+
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Table fetched successfully",
+      table: {
+        id: table._id,
+        tableName: table.tableName,
+        status: table.status,
+        capacity: table.capacity,
+        restaurantName: table.restaurantId.name,
+      },
+    });
+  } catch (err) {
+    console.error("Get Table error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const reserveTable = async (req, res) => {
+  try {
+    const { tableId } = req.body;
+
+    const table = await Table.findById(tableId);
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+
+    if (table.status !== "available") {
+      return res.status(400).json({
+        success: false,
+        message: `Table is currently ${table.status}`,
+      });
+    }
+
+    table.status = "reserved";
+    await table.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Table reserved successfully",
+      table,
+    });
+  } catch (err) {
+    console.error("Reserve Table error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const getAllMenus = async (req, res) => {
+  try {
+    const { restaurantId } = req.query;
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        success: false,
+        message: "restaurantId is required",
+      });
+    }
+
+    const menu = await Menu.findOne({ restaurantId });
+
+    if (!menu || !menu.items || menu.items.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No menus found for the given restaurant",
+        menu: [],
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Menus fetched successfully",
+      menu: menu.items,
+    });
+  } catch (err) {
+    console.error("Get All Menus error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const getAllTables = async (req, res) => {
+  try {
+    const { restaurantId } = req.query;
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        success: false,
+        message: "restaurantId is required",
+      });
+    }
+
+    const tables = await Table.find({ restaurantId });
+
+    if (!tables || tables.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No tables found for the given restaurant",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Tables fetched successfully",
+      tables,
+    });
+  } catch (err) {
+    console.error("Get All Tables error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 module.exports = {
   register,
   login,
   getRestaurant,
+  addMenuItem,
+  deleteMenuItem,
+  updateMenuItem,
+  addTable,
+  deleteTable,
+  updateTable,
+  getTableDetails,
+  reserveTable,
+  getAllMenus,
+  getAllTables,
 };
