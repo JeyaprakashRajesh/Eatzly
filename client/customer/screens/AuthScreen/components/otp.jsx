@@ -27,7 +27,7 @@ export default function Otp({ navigation, phone, setPhone, otp, setOtp, setIsAut
     }
 
     try {
-      const response = await axios.post(`http://192.168.1.4:8000/api/customer/otp`, {
+      const response = await axios.post(`${BACKEND_URL}/api/customer/otp`, {
         "phone": phone, 
         "otp": otp,
       });
