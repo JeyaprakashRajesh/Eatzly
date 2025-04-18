@@ -11,7 +11,8 @@ const verifyToken = (token) => {
       expiresIn: "30d",
     });
   } catch (error) {
-    throw new Error("Invalid token");
+    console.error("Error verifying token:", error);
+    return null;
   }
 };
 

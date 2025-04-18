@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.1.2",
+    "@react-native-camera-roll/camera-roll": "^7.10.0",
     "@react-native-picker/picker": "^2.11.0",
     "@react-native/metro-config": "^0.78.1",
     "@react-navigation/bottom-tabs": "^7.3.9",
@@ -18,6 +19,9 @@
     "axios": "^1.8.4",
     "expo": "~52.0.41",
     "expo-font": "~13.0.4",
+    "expo-media-library": "~17.0.6",
+    "expo-print": "^14.0.3",
+    "expo-sharing": "~13.0.1",
     "expo-status-bar": "~2.0.1",
     "expo-system-ui": "~4.0.9",
     "lucide-react-native": "^0.487.0",
@@ -26,9 +30,11 @@
     "react-native-dotenv": "^3.4.11",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-gesture-handler": "~2.20.2",
+    "react-native-qrcode-svg": "^6.3.15",
     "react-native-responsive-screen": "^1.4.2",
     "react-native-toast-message": "^2.2.1",
     "react-native-vector-icons": "^10.2.0",
+    "react-native-view-shot": "^4.0.3",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {

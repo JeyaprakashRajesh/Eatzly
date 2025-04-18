@@ -2,7 +2,7 @@ const Restaurants = require("../models/restaurantScema");
 const Menu = require("../models/menuSchema");
 const Table = require("../models/tableSchema");
 
-const { generateToken } = require("../utils/jwt");
+const { generateToken, verifyToken } = require("../utils/jwt");
 
 const register = async (req, res) => {
   try {
@@ -376,13 +376,22 @@ const addTable = async (req, res) => {
 
 const deleteTable = async (req, res) => {
   try {
-    const { tableId } = req.body;
+    const { restaurantId, tableId } = req.body;
+
+    const table = await Table.findOne({ _id: tableId, restaurantId });
+
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found for this restaurant",
+      });
+    }
 
     const deleted = await Table.findByIdAndDelete(tableId);
     if (!deleted) {
       return res.status(404).json({
         success: false,
-        message: "Table not found",
+        message: "Failed to delete table",
       });
     }
 
@@ -398,8 +407,7 @@ const deleteTable = async (req, res) => {
 
 const updateTable = async (req, res) => {
   try {
-    const { tableId } = req.body;
-    const updates = req.body;
+    const { tableId, updates } = req.body;
 
     const updatedTable = await Table.findByIdAndUpdate(tableId, updates, {
       new: true,
@@ -419,76 +427,6 @@ const updateTable = async (req, res) => {
     });
   } catch (err) {
     console.error("Update Table error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-};
-
-const getTableDetails = async (req, res) => {
-  try {
-    const { tableId } = req.query;
-
-    if (!tableId) {
-      return res.status(400).json({
-        success: false,
-        message: "Table ID is required",
-      });
-    }
-
-    const table = await Table.findById(tableId).populate("restaurantId");
-
-    if (!table) {
-      return res.status(404).json({
-        success: false,
-        message: "Table not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Table fetched successfully",
-      table: {
-        id: table._id,
-        tableName: table.tableName,
-        status: table.status,
-        capacity: table.capacity,
-        restaurantName: table.restaurantId.name,
-      },
-    });
-  } catch (err) {
-    console.error("Get Table error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-};
-
-const reserveTable = async (req, res) => {
-  try {
-    const { tableId } = req.body;
-
-    const table = await Table.findById(tableId);
-    if (!table) {
-      return res.status(404).json({
-        success: false,
-        message: "Table not found",
-      });
-    }
-
-    if (table.status !== "available") {
-      return res.status(400).json({
-        success: false,
-        message: `Table is currently ${table.status}`,
-      });
-    }
-
-    table.status = "reserved";
-    await table.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Table reserved successfully",
-      table,
-    });
-  } catch (err) {
-    console.error("Reserve Table error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -539,9 +477,10 @@ const getAllTables = async (req, res) => {
     const tables = await Table.find({ restaurantId });
 
     if (!tables || tables.length === 0) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message: "No tables found for the given restaurant",
+        tables: [],
       });
     }
 
@@ -556,6 +495,51 @@ const getAllTables = async (req, res) => {
   }
 };
 
+const getTableStatus = async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const token = req.query;
+    const response = verifyToken(token.token);
+
+    if (!response) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    if (!tableId) {
+      return res.status(400).json({
+        success: false,
+        message: "Table ID is required",
+      });
+    }
+
+    const table = await Table.findById(tableId);
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Table status fetched successfully",
+      table: {
+        id: table._id,
+        tableName: table.tableName,
+        status: table.status,
+        capacity: table.capacity,
+        createdAt: table.createdAt,
+      },
+    });
+  } catch (err) {
+    console.error("Get Table Status error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -566,8 +550,7 @@ module.exports = {
   addTable,
   deleteTable,
   updateTable,
-  getTableDetails,
-  reserveTable,
   getAllMenus,
   getAllTables,
+  getTableStatus,
 };

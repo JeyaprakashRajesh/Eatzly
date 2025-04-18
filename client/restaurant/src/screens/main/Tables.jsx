@@ -5,48 +5,217 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  Modal,
+  Linking,
+  Alert,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import colors from "@/constants/colors";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import TableIcon from "../../../assets/images/table-icon.png";
-import { TextInput } from "react-native-gesture-handler";
-import { ArrowDownUp, Info, Search } from "lucide-react-native";
+import { RefreshControl, TextInput } from "react-native-gesture-handler";
+import { ArrowDownUp, Info, Link, Plus, Search, X } from "lucide-react-native";
+import {
+  handleAddTable,
+  handleDeleteTable,
+  handleEditTable,
+  handleGetAllTables,
+} from "@/services/restaurantOperations";
+import Toast from "react-native-toast-message";
+import QRCode from "react-native-qrcode-svg";
+import { API_URL } from "@/constants/env";
+import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
+import ViewShot, { captureRef } from "react-native-view-shot";
 
 export default function Tables() {
   const dispatch = useDispatch();
+  const { id, token } = useSelector((state) => state.auth);
   const [searchQuery, setSearchQuery] = useState("");
-  const tables = [
-    { id: 1, name: "A", status: "available", capacity: 4 },
-    { id: 2, name: "B", status: "reserved", capacity: 4 },
-    { id: 3, name: "C", status: "not-available", capacity: 4 },
-    { id: 4, name: "D", status: "available", capacity: 4 },
-    { id: 5, name: "E", status: "reserved", capacity: 4 },
-    { id: 6, name: "F", status: "not-available", capacity: 4 },
-    { id: 7, name: "G", status: "occupied", capacity: 4 }, 
-    { id: 8, name: "H", status: "reserved", capacity: 4 },
-    { id: 9, name: "I", status: "not-available", capacity: 4 },
-    { id: 10, name: "J", status: "available", capacity: 4 },
-    { id: 11, name: "K", status: "reserved", capacity: 4 },
-    { id: 12, name: "L", status: "not-available", capacity: 4 },
-  ];
+  const tables = useSelector((state) => state.restaurant.tables);
   const [filteredTables, setFilteredTables] = useState(tables);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [newTable, setNewTable] = useState({ tableName: "", capacity: "" });
+  const [selectedTable, setSelectedTable] = useState(null);
+  const [isInfoModalVisible, setInfoModalVisible] = useState(false);
+  const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [tableToEdit, setTableToEdit] = useState({
+    tableName: "",
+    capacity: "",
+  });
+  const viewShotRef = useRef();
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredTables(tables);
     } else {
       const filtered = tables.filter((table) =>
-        table.name.toLowerCase().includes(searchQuery.toLowerCase())
+        table.tableName.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredTables(filtered);
     }
-  }, [searchQuery]);
+  }, [searchQuery, tables]);
+
+  const getAllTables = async () => {
+    await handleGetAllTables(id, token, dispatch);
+  };
+
+  const addTable = async () => {
+    if (newTable.tableName.trim() === "" || newTable.capacity.trim() === "") {
+      Toast.show({
+        type: "error",
+        text1: "Please fill all fields",
+      });
+      return;
+    }
+    const nameExists = tables.some(
+      (table) =>
+        table.tableName?.trim().toLowerCase() ===
+        newTable.tableName.trim().toLowerCase()
+    );
+    if (nameExists) {
+      Toast.show({
+        type: "error",
+        text1: "Table name already exists",
+      });
+      return;
+    }
+
+    const response = await handleAddTable(id, token, newTable, dispatch);
+    if (response.success) {
+      Toast.show({
+        type: "success",
+        text1: "Table added successfully",
+      });
+      setModalVisible(false);
+      setNewTable({ tableName: "", capacity: "" });
+      getAllTables();
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Something went wrong",
+      });
+    }
+  };
+  const shareQRCode = async () => {
+    console.log("Requesting media library permissions...");
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== "granted") {
+      Toast.show({ type: "error", text1: "Permission denied" });
+      return;
+    }
+
+    try {
+      const uri = await captureRef(viewShotRef.current, {
+        format: "png",
+        quality: 1.0,
+      });
+
+      await Sharing.shareAsync(uri);
+      Toast.show({ type: "success", text1: "QR Code shared!" });
+    } catch (error) {
+      console.log(error);
+      Toast.show({ type: "error", text1: "Failed to share QR code" });
+    }
+  };
+
+  const editTable = async (selectedTable) => {
+    if (
+      selectedTable.tableName.trim().toLowerCase() ===
+        tableToEdit.tableName.trim().toLowerCase() &&
+      selectedTable.capacity === tableToEdit.capacity
+    ) {
+      Toast.show({
+        type: "error",
+        text1: "No changes detected",
+      });
+      return;
+    }
+
+    const tableExists = tables.some(
+      (table) =>
+        table.tableName?.trim().toLowerCase() ===
+        tableToEdit.tableName.trim().toLowerCase()
+    );
+    if (tableExists) {
+      Toast.show({
+        type: "error",
+        text1: "Table name already exists",
+      });
+      return;
+    }
+
+    const response = await handleEditTable(
+      id,
+      token,
+      selectedTable._id,
+      tableToEdit,
+      dispatch
+    );
+
+    if (response.success) {
+      Toast.show({
+        type: "success",
+        text1: "Table edited successfully",
+      });
+      setEditModalVisible(false);
+      setTableToEdit({ tableName: "", capacity: "" });
+      getAllTables();
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Something went wrong",
+      });
+    }
+  };
+
+  const deleteTable = async (tableId) => {
+    Alert.alert(
+      "Delete Table",
+      "Are you sure you want to delete this table?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const response = await handleDeleteTable(
+              id,
+              token,
+              tableId,
+              dispatch
+            );
+            if (response.success) {
+              Toast.show({
+                type: "success",
+                text1: "Table deleted successfully",
+              });
+              setInfoModalVisible(false);
+              setSelectedTable(null);
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Something went wrong",
+              });
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
+  useEffect(() => {
+    getAllTables();
+  }, [dispatch]);
 
   return (
     <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
@@ -80,12 +249,39 @@ export default function Tables() {
         <FlatList
           data={filteredTables}
           numColumns={2}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item._id.toString()}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={() => {
+                getAllTables();
+              }}
+            />
+          }
           columnWrapperStyle={{ justifyContent: "space-between" }}
+          ListEmptyComponent={
+            <View style={{ marginTop: hp("25%"), alignSelf: "center" }}>
+              <Text
+                style={{
+                  fontSize: hp("2%"),
+                  fontFamily: "Montserrat-MediumItalic",
+                  color: "#ccc",
+                }}
+              >
+                No Tables Found
+              </Text>
+            </View>
+          }
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <View style={styles.tableCard}>
-              <TouchableOpacity style={styles.infoIconPlaceholder}>
+              <TouchableOpacity
+                style={styles.infoIconPlaceholder}
+                onPress={() => {
+                  setSelectedTable(item);
+                  setInfoModalVisible(true);
+                }}
+              >
                 <Info size={hp("2.5%")} color={colors.primary} />
               </TouchableOpacity>
               <View
@@ -96,9 +292,11 @@ export default function Tables() {
                 }}
               >
                 <Image source={TableIcon} style={styles.tableImage} />
-                <Text style={styles.tableName}>{item.name}</Text>
+                <Text style={styles.tableName}>
+                  {item?.tableName?.toUpperCase()}
+                </Text>
               </View>
-              <Text style={styles.capacityText} >Capacity: {item.capacity}</Text>
+              <Text style={styles.capacityText}>Capacity: {item.capacity}</Text>
               <View
                 style={[
                   styles.statusBadge,
@@ -114,7 +312,7 @@ export default function Tables() {
                 <Text
                   style={[
                     styles.statusText,
-                    item.status === "occupied" 
+                    item.status === "occupied"
                       ? styles.occupiedText
                       : item.status === "available"
                       ? { color: "#003f1e" }
@@ -135,6 +333,244 @@ export default function Tables() {
           )}
         />
       </View>
+      <TouchableOpacity
+        style={styles.addButtonContainer}
+        onPress={() => setModalVisible(true)}
+      >
+        <Plus size={hp("3.5%")} color={"#fff"} />
+      </TouchableOpacity>
+      <Modal
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.addTableContainer}>
+          <View style={styles.addTableHeader}>
+            <Text style={styles.addTableHeaderText}>Add Table</Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <X size={hp("2.7%")} color={"#626262"} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.addTableContent}>
+            <View style={styles.addTableInputContainer}>
+              <Text style={styles.addTableInputLabel}>Table Name</Text>
+              <TextInput
+                style={styles.addTableInput}
+                value={newTable.tableName}
+                maxLength={1}
+                placeholder="A"
+                onChangeText={(text) =>
+                  setNewTable((prev) => ({ ...prev, tableName: text }))
+                }
+                placeholderTextColor={"#ccc"}
+              />
+            </View>
+            <View style={styles.addTableInputContainer}>
+              <Text style={styles.addTableInputLabel}>Capacity</Text>
+              <TextInput
+                style={styles.addTableInput}
+                value={newTable.capacity}
+                keyboardType="numeric"
+                placeholder="4"
+                onChangeText={(text) => {
+                  if (/^\d+$/.test(text) || text === "")
+                    setNewTable((prev) => ({ ...prev, capacity: text }));
+                }}
+                placeholderTextColor={"#ccc"}
+                returnKeyLabel="Done"
+                returnKeyType="done"
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.addButtonContainerForm}
+              onPress={() => {
+                addTable();
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "Montserrat-SemiBold",
+                  fontSize: hp("1.8%"),
+                }}
+              >
+                Add
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        transparent={true}
+        visible={isInfoModalVisible}
+        onRequestClose={() => setInfoModalVisible(false)}
+      >
+        <View style={styles.tableInfoContainer}>
+          <View style={styles.tableInfoHeader}>
+            <Text style={styles.tableInfoHeaderText}>Table Info</Text>
+            <TouchableOpacity onPress={() => setInfoModalVisible(false)}>
+              <X size={hp("2.7%")} color={"#626262"} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.qrCodeContainer}>
+            {selectedTable?._id && (
+              <>
+                <ViewShot
+                  ref={viewShotRef}
+                  options={{ format: "png", quality: 1.0 }}
+                  style={styles.qrCode}
+                >
+                  <QRCode
+                    value={`${API_URL}/api/restaurant/table/status/${selectedTable?._id}?token=${token}`}
+                    size={hp("23%")}
+                  />
+                </ViewShot>
+                <View style={styles.qrCodeActions}>
+                  <TouchableOpacity
+                    style={styles.qrCodeButton}
+                    onPress={shareQRCode}
+                  >
+                    <Text style={styles.qrCodeButtonText}>Share QR Code</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "#a6a6a6",
+                      padding: hp("1%"),
+                      borderRadius: hp("1.2%"),
+                    }}
+                  >
+                    <Link
+                      onPress={() => {
+                        Linking.openURL(
+                          `${API_URL}/api/restaurant/table/status/${selectedTable._id}?token=${token}`
+                        );
+                      }}
+                      size={hp("2.7%")}
+                      color={"#fff"}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+          <View style={styles.tableInfoContent}>
+            <View style={styles.tableInfoRow}>
+              <Text style={styles.tableInfoLabel}>Table Name:</Text>
+              <Text style={styles.tableInfoValue}>
+                {selectedTable?.tableName}
+              </Text>
+            </View>
+            <View style={styles.tableInfoRow}>
+              <Text style={styles.tableInfoLabel}>Capacity:</Text>
+              <Text style={styles.tableInfoValue}>
+                {selectedTable?.capacity}
+              </Text>
+            </View>
+            <View style={styles.tableInfoRow}>
+              <Text style={styles.tableInfoLabel}>Status:</Text>
+
+              <Text style={styles.tableInfoValue}>
+                {selectedTable?.status.charAt(0).toUpperCase() +
+                  selectedTable?.status.slice(1)}
+              </Text>
+            </View>
+            <View style={styles.tableInfoRow}>
+              <Text style={styles.tableInfoLabel}>Created At:</Text>
+              <Text style={styles.tableInfoValue}>
+                {new Date(selectedTable?.createdAt).toLocaleString()}
+              </Text>
+            </View>
+            <View style={styles.tableActions}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => {
+                  setTableToEdit({
+                    tableName: selectedTable.tableName,
+                    capacity: selectedTable.capacity,
+                  });
+                  setInfoModalVisible(false);
+                  setEditModalVisible(true);
+                }}
+              >
+                <Text style={styles.tableActionText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  deleteTable(selectedTable._id);
+                }}
+                style={styles.deleteButton}
+              >
+                <Text style={styles.tableActionText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        transparent={true}
+        visible={isEditModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.addTableContainer}>
+          <View style={styles.addTableHeader}>
+            <Text style={styles.addTableHeaderText}>Edit Table</Text>
+            <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+              <X size={hp("2.7%")} color={"#626262"} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.addTableContent}>
+            <View style={styles.addTableInputContainer}>
+              <Text style={styles.addTableInputLabel}>Table Name</Text>
+              <TextInput
+                style={styles.addTableInput}
+                value={tableToEdit.tableName}
+                onChangeText={(text) =>
+                  setTableToEdit((prev) => ({ ...prev, tableName: text }))
+                }
+                placeholder="A"
+                placeholderTextColor={"#ccc"}
+              />
+            </View>
+            <View style={styles.addTableInputContainer}>
+              <Text style={styles.addTableInputLabel}>Capacity</Text>
+              <TextInput
+                style={styles.addTableInput}
+                value={tableToEdit.capacity.toString()}
+                keyboardType="numeric"
+                onChangeText={(text) =>
+                  setTableToEdit((prev) => ({
+                    ...prev,
+                    capacity: text,
+                  }))
+                }
+                placeholder="4"
+                placeholderTextColor={"#ccc"}
+                returnKeyType="done"
+                returnKeyLabel="Done"
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.addButtonContainerForm}
+              onPress={() => {
+                editTable(selectedTable);
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "Montserrat-SemiBold",
+                  fontSize: hp("1.8%"),
+                }}
+              >
+                Save Changes
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -241,14 +677,195 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffc9c9",
   },
   occupied: {
-    backgroundColor: "#89C2FF",  
+    backgroundColor: "#89C2FF",
   },
   occupiedText: {
     color: "#0053AC",
   },
-  capacityText:{
+  capacityText: {
     fontSize: hp("1.6%"),
     fontFamily: "Montserrat-MediumItalic",
     color: colors.text1,
     marginBottom: hp("1%"),
-  }});
+  },
+  addButtonContainer: {
+    position: "absolute",
+    bottom: hp("2%"),
+    right: wp("3.5%"),
+    backgroundColor: "#27A8A8",
+    width: hp("7%"),
+    height: hp("7%"),
+    borderRadius: hp("100%"),
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+  },
+  addTableContainer: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addTableHeader: {
+    backgroundColor: "#fff",
+    width: "85%",
+    padding: hp("2.5%"),
+    borderTopLeftRadius: hp("1.5%"),
+    borderTopRightRadius: hp("1.5%"),
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  addTableHeaderText: {
+    fontSize: hp("2.3%"),
+    fontFamily: "Montserrat-Bold",
+    color: "#333",
+  },
+  addTableContent: {
+    backgroundColor: "#fff",
+    width: "85%",
+    padding: hp("2.5%"),
+    borderBottomLeftRadius: hp("1.5%"),
+    borderBottomRightRadius: hp("1.5%"),
+  },
+  addTableInputContainer: {
+    marginBottom: hp("2.5%"),
+  },
+  addTableInputLabel: {
+    fontSize: hp("1.7%"),
+    fontFamily: "Montserrat-SemiBold",
+    color: "#555",
+    marginBottom: hp("1.2%"),
+  },
+  addTableInput: {
+    fontSize: hp("1.9%"),
+    fontFamily: "Montserrat-Medium",
+    color: "#333",
+    backgroundColor: "#f5f5f5",
+    borderRadius: hp("1%"),
+    paddingHorizontal: wp("5%"),
+    paddingVertical: hp("1.8%"),
+  },
+  addButtonContainerForm: {
+    backgroundColor: "#27A8A8",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+    paddingVertical: hp("1.5%"),
+    borderRadius: wp("2%"),
+    marginTop: hp("1%"),
+  },
+  tableInfoContainer: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tableInfoHeader: {
+    backgroundColor: "#fff",
+    width: "85%",
+    padding: hp("2.5%"),
+    borderTopLeftRadius: hp("1.5%"),
+    borderTopRightRadius: hp("1.5%"),
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  tableInfoHeaderText: {
+    fontSize: hp("2.3%"),
+    fontFamily: "Montserrat-Bold",
+    color: "#333",
+  },
+  tableInfoContent: {
+    backgroundColor: "#fff",
+    width: "85%",
+    padding: hp("2.5%"),
+    borderBottomLeftRadius: hp("1.5%"),
+    borderBottomRightRadius: hp("1.5%"),
+  },
+  tableInfoLabel: {
+    fontSize: hp("1.8%"),
+    fontFamily: "Montserrat-SemiBold",
+    color: "#333",
+    marginRight: wp("2%"),
+  },
+  qrCodeContainer: {
+    backgroundColor: "#fff",
+    width: "85%",
+    alignItems: "center",
+    paddingVertical: hp("2%"),
+  },
+  tableInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: hp("1.2%"),
+  },
+  tableInfoValue: {
+    fontSize: hp("1.8%"),
+    fontFamily: "Montserrat-Medium",
+    color: "#333",
+  },
+  qrCodeActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: wp("3%"),
+    marginTop: hp("2%"),
+  },
+  qrCodeButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: hp("1.2%"),
+    paddingHorizontal: wp("3%"),
+    borderRadius: wp("2%"),
+    elevation: 3,
+  },
+  qrCodeButtonText: {
+    color: "#fff",
+    fontSize: hp("1.8%"),
+    fontFamily: "Montserrat-SemiBold",
+  },
+  qrCode: {
+    resizeMode: "contain",
+    backgroundColor: "#f7f7f7",
+    padding: hp("2.5%"),
+    borderRadius: hp("3%"),
+    borderColor: colors.primary,
+    borderWidth: hp("0.1%"),
+  },
+  tableActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: hp("2%"),
+    marginBottom: hp("1.5%"),
+    backgroundColor: "#fff",
+    gap: wp("3%"),
+  },
+  editButton: {
+    backgroundColor: "#4caf50",
+    paddingVertical: hp("1%"),
+    paddingHorizontal: wp("4%"),
+    borderRadius: wp("2%"),
+    flex: 1,
+  },
+  deleteButton: {
+    backgroundColor: "#f44336",
+    paddingVertical: hp("1%"),
+    paddingHorizontal: wp("4%"),
+    borderRadius: wp("2%"),
+    flex: 1,
+  },
+  tableActionText: {
+    color: "#fff",
+    fontSize: hp("1.8%"),
+    fontFamily: "Montserrat-SemiBold",
+    textAlign: "center",
+  },
+});
