@@ -19,16 +19,18 @@ const OrderSchema = new mongoose.Schema(
     },
     items: [
       {
+        _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
         name: { type: String, required: true },
         price: { type: Number, required: true },
         quantity: { type: Number, required: true },
         total: { type: Number, required: true },
+        completed: { type: Boolean, default: false },
       },
     ],
     totalAmount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "preparing", "ready", "served"],
+      enum: ["pending", "preparing", "served"],
       default: "pending",
     },
     paymentId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" },
