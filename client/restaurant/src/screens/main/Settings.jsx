@@ -7,13 +7,10 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { ArrowDownUp, LucideLogOut, Plus, Search } from "lucide-react-native";
-import { FlatList, TextInput } from "react-native-gesture-handler";
-import VegIcon from "../../../assets/icons/veg-icon.png";
-import NonVegIcon from "../../../assets/icons/nonveg-icon.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
-export default function Settings() {
+export default function Settings({ navigation }) {
   const dispatch = useDispatch();
   return (
     <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
@@ -23,34 +20,51 @@ export default function Settings() {
       <View style={styles.seperator}></View>
       <View style={styles.content}>
         <View style={styles.top}>
-          <Text style={styles.settingItem}>1. Accounts</Text>
-          <Text style={styles.settingItem}>3. Preferences</Text>
-          <Text style={styles.settingItem}>4. Support</Text>
+          <Text
+            onPress={() => {
+              navigation.navigate("Accounts");
+            }}
+            style={styles.settingItem}
+          >
+            1. Accounts
+          </Text>
+          <Text
+            onPress={() => {
+              navigation.navigate("Reviews");
+            }}
+            style={styles.settingItem}
+          >
+            3. Manage Reviews
+          </Text>
+          <Text
+            onPress={() => [navigation.navigate("Support")]}
+            style={styles.settingItem}
+          >
+            4. Support
+          </Text>
         </View>
         <View style={styles.bottom}>
-        
-            <TouchableOpacity
+          <TouchableOpacity
             style={{
               flexDirection: "row",
               alignItems: "center",
               gap: wp("2%"),
             }}
-              onPress={() => {
-                AsyncStorage.removeItem("token");
-                dispatch({
-                  type: "SET_AUTH",
-                  payload: {
-                    isAuthenticated: false,
-                    token: false,
-                    id: false,
-                  },
-                });
-
-              }}
-            >
-              <LucideLogOut size={hp("3%")} color={"#626262"} />
-              <Text style={styles.logoutText}>Logout</Text>
-            </TouchableOpacity>
+            onPress={() => {
+              AsyncStorage.removeItem("token");
+              dispatch({
+                type: "SET_AUTH",
+                payload: {
+                  isAuthenticated: false,
+                  token: false,
+                  id: false,
+                },
+              });
+            }}
+          >
+            <LucideLogOut size={hp("3%")} color={"#626262"} />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>

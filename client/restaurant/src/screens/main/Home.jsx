@@ -16,12 +16,16 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { Bell, InfoIcon } from "lucide-react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import LinkIcon from "../../../assets/icons/icon-park_share.png";
 import TableIcon from "../../../assets/images/table-icon.png";
+import { handleUpdateRestaurantStatus } from "@/services/restaurantOperations";
 
 export default function Home() {
   const restaurant = useSelector((state) => state.restaurant.restaurant);
+  const dispatch = useDispatch();
+  const id = useSelector((state) => state.auth.id);
+  const token = useSelector((state) => state.auth.token);
   const [open, setOpen] = useState(true);
   const ordersCompleted = 5;
   const todayRevenue = 1000;
@@ -55,6 +59,32 @@ export default function Home() {
       table: "C",
     },
   ];
+
+  const updateStatus = async () => {
+    if (open) {
+      Alert.alert("Are you sure you want to close the restaurant?", "", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Close",
+          onPress: async () => {
+            setOpen(false);
+            await handleUpdateRestaurantStatus(id, token, false, dispatch);
+          },
+        },
+      ]);
+    } else {
+      Alert.alert("Are you sure you want to open the restaurant?", "", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Open",
+          onPress: async () => {
+            setOpen(true);
+            await handleUpdateRestaurantStatus(id, token, true, dispatch);
+          },
+        },
+      ]);
+    }
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.liveOrderItem}>
@@ -171,43 +201,7 @@ export default function Home() {
 
             <TouchableOpacity
               onPress={() => {
-                if (open) {
-                  Alert.alert(
-                    "Are you sure you want to close the restaurant?",
-                    "",
-                    [
-                      {
-                        text: "Cancel",
-                        onPress: () => {},
-                        style: "cancel",
-                      },
-                      {
-                        text: "Close",
-                        onPress: () => {
-                          setOpen(!open);
-                        },
-                      },
-                    ]
-                  );
-                } else {
-                  Alert.alert(
-                    "Are you sure you want to open the restaurant?",
-                    "",
-                    [
-                      {
-                        text: "Cancel",
-                        onPress: () => {},
-                        style: "cancel",
-                      },
-                      {
-                        text: "Open",
-                        onPress: () => {
-                          setOpen(!open);
-                        },
-                      },
-                    ]
-                  );
-                }
+                updateStatus();
               }}
               style={[
                 styles.statusButton,

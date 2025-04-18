@@ -24,39 +24,56 @@ const restaurantSchema = new mongoose.Schema(
     tables: [{ type: mongoose.Schema.Types.ObjectId, ref: "Table" }],
     employees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     rating: { type: Number, default: 0 },
-    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
+    reviews: [
+      {
+        customer: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Customer",
+        },
+        rating: {
+          type: Number,
+          required: true,
+          min: 1,
+          max: 5,
+          default: 0,
+        },
+        review: {
+          type: String,
+        },
+      },
+    ],
     reservations: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Reservation" },
     ],
-    images: [{ type: String }],
+    image: { type: String },
     openingHours: {
       monday: {
-        open: String,
-        close: String,
+        open: { type: String, default: "09:00" },
+        close: { type: String, default: "21:00" },
       },
       tuesday: {
-        open: String,
-        close: String,
+        open: { type: String, default: "09:00" },
+        close: { type: String, default: "21:00" },
       },
       wednesday: {
-        open: String,
-        close: String,
+        open: { type: String, default: "09:00" },
+        close: { type: String, default: "21:00" },
       },
       thursday: {
-        open: String,
-        close: String,
+        open: { type: String, default: "09:00" },
+        close: { type: String, default: "21:00" },
       },
       friday: {
-        open: String,
-        close: String,
+        open: { type: String, default: "09:00" },
+        close: { type: String, default: "21:00" },
       },
       saturday: {
-        open: String,
-        close: String,
+        open: { type: String, default: "09:00" },
+        close: { type: String, default: "21:00" },
       },
       sunday: {
-        open: String,
-        close: String,
+        open: { type: String, default: "09:00" },
+        close: { type: String, default: "21:00" },
       },
     },
     tags: [{ type: String }],
@@ -65,6 +82,7 @@ const restaurantSchema = new mongoose.Schema(
       code: { type: String },
       createdAt: { type: Date },
     },
+    isOpen: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -17,6 +17,7 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import Tables from "@/screens/main/Tables";
+import { HomeStack, SettingsStack } from "./stacks/mainStacks";
 
 const Tab = createBottomTabNavigator();
 
@@ -49,11 +50,11 @@ export default function TabNavigator() {
           marginTop: 10,
         },
       }}
-      initialRouteName="Tables"
+      initialRouteName="Home"
     >
       <Tab.Screen
         name="Home"
-        component={Home}
+        component={HomeStack}
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon source={HomeIcon} color={color} />
@@ -99,7 +100,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen
         name="Settings"
-        component={Settings}
+        component={SettingsStack}
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon

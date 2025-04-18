@@ -179,7 +179,10 @@ const getRestaurant = async (req, res) => {
       });
     }
 
-    const restaurant = await Restaurants.findById(user.id);
+    const restaurant = await Restaurants.findById(user.id).populate({
+      path: "reviews.customer",
+      select: "username phone",
+    });
 
     if (!restaurant) {
       return res.status(404).json({
@@ -540,6 +543,124 @@ const getTableStatus = async (req, res) => {
   }
 };
 
+const updateRestaurant = async (req, res) => {
+  try {
+    const { restaurantId, updatedRestaurant } = req.body;
+    console.log(restaurantId, updatedRestaurant);
+
+    if (!restaurantId || !updatedRestaurant) {
+      return res.status(400).json({
+        success: false,
+        message: "restaurantId and updatedRestaurant data are required",
+      });
+    }
+
+    const restaurant = await Restaurants.findById(restaurantId);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found",
+      });
+    }
+
+    Object.keys(updatedRestaurant).forEach((key) => {
+      if (updatedRestaurant[key] !== undefined) {
+        restaurant[key] = updatedRestaurant[key];
+      }
+    });
+
+    await restaurant.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Restaurant updated successfully",
+      restaurant,
+    });
+  } catch (err) {
+    console.error("Update Restaurant error:", err);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating restaurant",
+    });
+  }
+};
+
+const updateRestaurantProfile = async (req, res) => {
+  try {
+    const { restaurantId, updatedRestaurantImage } = req.body;
+    console.log(restaurantId, updatedRestaurantImage);
+
+    if (!restaurantId || !updatedRestaurantImage) {
+      return res.status(400).json({
+        success: false,
+        message: "restaurantId and updatedRestaurantImage are required",
+      });
+    }
+
+    const restaurant = await Restaurants.findById(restaurantId);
+    console.log(restaurant);
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found",
+      });
+    }
+
+    restaurant.image = updatedRestaurantImage;
+    await restaurant.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Restaurant profile image updated successfully",
+      restaurant,
+    });
+  } catch (error) {
+    console.error("Update Restaurant Profile error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating the restaurant profile image",
+    });
+  }
+};
+
+const updateStatus = async (req, res) => {
+  try {
+    const { restaurantId, status } = req.body;
+
+    if (!restaurantId || typeof status !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "restaurantId and a valid boolean status are required",
+      });
+    }
+
+    const restaurant = await Restaurants.findById(restaurantId);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found",
+      });
+    }
+
+    restaurant.isOpen = status;
+    await restaurant.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Restaurant isOpen status updated to ${status}`,
+      restaurant,
+    });
+  } catch (err) {
+    console.error("Update Status error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while updating restaurant status",
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -553,4 +674,7 @@ module.exports = {
   getAllMenus,
   getAllTables,
   getTableStatus,
+  updateRestaurant,
+  updateRestaurantProfile,
+  updateStatus,
 };

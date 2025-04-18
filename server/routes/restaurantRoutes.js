@@ -10,7 +10,21 @@ router.get(
   verifyTokenMiddleWare,
   restaurantController.getRestaurant
 );
-
+router.put(
+  "/update",
+  verifyTokenMiddleWare,
+  restaurantController.updateRestaurant
+);
+router.put(
+  "/profile/update",
+  verifyTokenMiddleWare,
+  restaurantController.updateRestaurantProfile
+);
+router.put(
+  "/update-status",
+  verifyTokenMiddleWare,
+  restaurantController.updateStatus
+);
 router.get("/menus", verifyTokenMiddleWare, restaurantController.getAllMenus);
 router.post(
   "/menu/add",

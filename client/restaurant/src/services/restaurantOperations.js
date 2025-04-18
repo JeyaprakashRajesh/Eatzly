@@ -2,6 +2,7 @@ import axios from "axios";
 import { API_URL } from "@/constants/env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+
 export const getRestaurant = async (token, dispatch) => {
   try {
     const response = await axios.get(
@@ -238,6 +239,102 @@ export const handleDeleteTable = async (
     if (response.status === 200) {
       console.log("Table deleted successfully");
       handleGetAllTables(restaurantId, token, dispatch);
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const handleRestaurantUpdate = async (
+  restaurantId,
+  token,
+  updatedRestaurant,
+  dispatch
+) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/restaurant/update`,
+      {
+        restaurantId,
+        updatedRestaurant,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.status === 200) {
+      dispatch({
+        type: "SET_RESTAURANT",
+        payload: response.data.restaurant,
+      });
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const handleRestaurantProfileUpdate = async (
+  restaurantId,
+  token,
+  updatedRestaurantImage,
+  dispatch
+) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/restaurant/profile/update`,
+      {
+        restaurantId,
+        updatedRestaurantImage,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.status === 200 || response.status === 201) {
+      dispatch({
+        type: "SET_RESTAURANT",
+        payload: response.data.restaurant,
+      });
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const handleUpdateRestaurantStatus = async (
+  restaurantId,
+  token,
+  status,
+  dispatch
+) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/restaurant/update-status`,
+      {
+        restaurantId,
+        status,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.status === 200) {
+      dispatch({
+        type: "SET_RESTAURANT",
+        payload: response.data.restaurant,
+      });
       return response.data;
     }
   } catch (error) {
