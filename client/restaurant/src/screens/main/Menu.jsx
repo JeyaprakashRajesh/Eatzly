@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
+  Alert,
 } from "react-native";
 import { KeyboardAvoidingView, Platform } from "react-native";
 import React, { useEffect, useState } from "react";
@@ -16,7 +17,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { ArrowDownUp, Plus, Search, X } from "lucide-react-native";
+import { ArrowDownUp, Download, Plus, Search, X } from "lucide-react-native";
 import {
   FlatList,
   RefreshControl,
@@ -34,6 +35,7 @@ import {
   handleUpdateMenuItem,
 } from "@/services/restaurantOperations";
 import Toast from "react-native-toast-message";
+import { generateMenuPDF } from "@/components/menuPdf";
 
 export default function Menu() {
   const dispatch = useDispatch();
@@ -151,21 +153,43 @@ export default function Menu() {
   };
 
   const deleteMenuItem = async (mid) => {
-    const response = await handleDeleteMenuItem(id, token, mid, dispatch);
-    if (response?.success) {
-      Toast.show({
-        type: "success",
-        text1: "Menu Item Deleted Successfully",
-      });
-      fetchAllMenus();
-      setEditModalVisible(false);
-    } else {
-      Toast.show({
-        type: "error",
-        text1: "Error deleting menu item",
-      });
-      console.log(response.message);
-    }
+    Alert.alert(
+      "Delete Menu Item",
+      "Are you sure you want to delete this menu item?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: async () => {
+            // Call the actual delete function after confirmation
+            const response = await handleDeleteMenuItem(
+              id,
+              token,
+              mid,
+              dispatch
+            );
+            if (response?.success) {
+              Toast.show({
+                type: "success",
+                text1: "Menu Item Deleted Successfully",
+              });
+              fetchAllMenus(); // Refresh the menu list
+              setEditModalVisible(false); // Close the edit modal
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Error deleting menu item",
+              });
+              console.log(response.message);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   return (
@@ -193,9 +217,16 @@ export default function Menu() {
               color={"#ccc"}
             />
           </View>
-          <View>
-            <ArrowDownUp size={hp("3%")} color={"#626262"} />
-          </View>
+          <TouchableOpacity
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: hp("1%"),
+              padding: hp("1.3%"),
+            }}
+            onPress={() => generateMenuPDF(menus)}
+          >
+            <Download size={hp("2.7%")} color={"#fff"} />
+          </TouchableOpacity>
         </View>
         <FlatList
           key={`flatlist-${2}`}
@@ -419,10 +450,10 @@ export default function Menu() {
               />
             </View>
             <TouchableOpacity
-              style={styles.addMenuItemButton}
+              style={styles.addItemButton}
               onPress={addMenuItem}
             >
-              <Text style={styles.addMenuItemButtonText}>Add Item</Text>
+              <Text style={styles.addItemButtonText}>Add Item</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -632,7 +663,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "relative",
     marginBottom: hp("1%"),
-    gap: wp("5%"),
+    gap: wp("4%"),
   },
   searchContainer: {
     flexDirection: "row",
@@ -791,15 +822,26 @@ const styles = StyleSheet.create({
     borderRadius: hp("1%"),
     paddingHorizontal: wp("4%"),
     paddingVertical: hp("1.5%"),
-    fontSize: hp("1.8%"),
-    fontFamily: "Montserrat-Medium",
-    color: "#fff",
     alignItems: "center",
     justifyContent: "center",
     marginTop: hp("2%"),
     flex: 1,
   },
   addMenuItemButtonText: {
+    fontFamily: "Montserrat-SemiBold",
+    fontSize: hp("1.8%"),
+    color: "#fff",
+  },
+  addItemButton: {
+    backgroundColor: "#27A8A8",
+    paddingHorizontal: wp("4%"),
+    paddingVertical: hp("1.5%"),
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: hp("2%"),
+    borderRadius: hp("1%"),
+  },
+  addItemButtonText: {
     fontFamily: "Montserrat-SemiBold",
     fontSize: hp("1.8%"),
     color: "#fff",

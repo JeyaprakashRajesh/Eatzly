@@ -40,7 +40,7 @@ router.put(
   verifyTokenMiddleWare,
   restaurantController.updateTable
 );
-router.get("/table", restaurantController.getTableDetails);
-router.post("/table/reserve", restaurantController.reserveTable);
+
+router.get("/table/status/:tableId", restaurantController.getTableStatus);
 
 module.exports = router;
