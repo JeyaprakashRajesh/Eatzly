@@ -27,9 +27,9 @@ const OrderSchema = new mongoose.Schema(
         completed: { type: Boolean, default: false },
       },
     ],
-    totalAmount: { type: Number, required: true },
+    totalAmount: { type: Number, default: 0 },
     status: {
-      type: String,
+      type: String, 
       enum: ["pending", "preparing", "served"],
       default: "pending",
     },
@@ -38,6 +38,6 @@ const OrderSchema = new mongoose.Schema(
     endTime: { type: Date },
   },
   { timestamps: true }          
-);
+);  
 
 module.exports = mongoose.model("Order", OrderSchema);

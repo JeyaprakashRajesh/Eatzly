@@ -17,10 +17,10 @@ const CustomerSchema = new mongoose.Schema(
     otp: {
       type: Number
     },
-    reservations: [
+    orders: [
       { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "Reservation" 
+        ref: "Order" 
       }
     ],
     address: {

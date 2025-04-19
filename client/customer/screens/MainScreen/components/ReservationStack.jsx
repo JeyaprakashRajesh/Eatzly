@@ -8,6 +8,7 @@ import { View, Text } from "react-native";
 import ReservationScreen from "./Reservations/ReservationScreen";
 import ConfirmReservation from "./Reservations/ConfirmReservation";
 import ScanQR from "./Reservations/ScanQR";
+import ViewReservation from "./Reservations/ViewReservation";
 
 const Stack = createNativeStackNavigator();
 
@@ -22,7 +23,10 @@ const ReservationStack = ({ data }) => {
   }, []);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName="Reservations"
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen
         name="Reservations"
         component={ReservationScreen}
@@ -34,9 +38,14 @@ const ReservationStack = ({ data }) => {
         initialParams={{ qr, setQr }}
       />
       <Stack.Screen
-      name="ConfirmReservation"
-      component={ConfirmReservation}
-      initialParams={{ qr }}
+        name="ConfirmReservation"
+        component={ConfirmReservation}
+        initialParams={{ qr, data }}
+      />
+      <Stack.Screen
+        name="ViewReservation"
+        component={ViewReservation}
+        initialParams={{ reservations, data }}
       />
     </Stack.Navigator>
   );

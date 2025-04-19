@@ -42,7 +42,7 @@ const restaurantSchema = new mongoose.Schema(
         },
       },
     ],
-    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Orders" }],
+    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
     image: { type: String },
     openingHours: { 
       monday: {
