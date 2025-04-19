@@ -60,9 +60,12 @@ export default function ConformReservation({ route, navigation }) {
         />
         <Text style={styles.imageText}>{tableData.tableName}</Text>
       </View>
+<<<<<<< Updated upstream
       <View style={styles.restaurantContainer}>
         <Text style={styles.restaurantName}>{restaurant.}</Text>
       </View>
+=======
+>>>>>>> Stashed changes
     </View>
   );
 }
