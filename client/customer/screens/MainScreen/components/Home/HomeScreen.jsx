@@ -58,7 +58,9 @@ const HomeScreen = ({ route, navigation  }) => {
 
           />
         </View>
-        <TouchableOpacity style={styles.qrContainer}>
+        <TouchableOpacity onPress={()=>{
+          navigation.navigate("Reservations")
+        }} style={styles.qrContainer}>
           <Image
             source={require("../../../../assets/images/qr.png")}
             style={styles.qrIcon}

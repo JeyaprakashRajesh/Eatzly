@@ -156,10 +156,10 @@ const getRestaurantMenu = async (req, res) => {
 
 const createOrder = async (req, res) => {
   try {
-    const { tableId, customerId, restaurantId, items, totalAmount, paymentId } =
-      req.body;
+    const { tableId, customerId, restaurantId } = req.body;
+    console.log(tableId, customerId, restaurantId);
 
-    if (!tableId || !customerId || !restaurantId || !items || !totalAmount) {
+    if (!tableId || !customerId || !restaurantId) {
       return res.status(400).json({
         success: false,
         message: "Missing required order fields",
@@ -167,12 +167,9 @@ const createOrder = async (req, res) => {
     }
 
     const newOrder = new Order({
-      tableId: mongoose.Types.ObjectId(tableId),
-      customerId: mongoose.Types.ObjectId(customerId),
-      restaurantId: mongoose.Types.ObjectId(restaurantId),
-      items,
-      totalAmount,
-      paymentId: paymentId ? mongoose.Types.ObjectId(paymentId) : undefined,
+      tableId: new mongoose.Types.ObjectId(tableId),
+      customerId: new mongoose.Types.ObjectId(customerId),
+      restaurantId: new mongoose.Types.ObjectId(restaurantId),
     });
 
     await newOrder.save();
@@ -185,11 +182,13 @@ const createOrder = async (req, res) => {
 
     const customer = await Customer.findById(customerId);
     if (customer) {
+      if (!customer.orders) customer.orders = [];
       customer.orders.push(newOrder._id);
       await customer.save();
     }
     const restaurant = await Restaurant.findById(restaurantId);
     if (restaurant) {
+      if (!restaurant.orders) restaurant.orders = [];
       restaurant.orders.push(newOrder._id);
       await restaurant.save();
     }
@@ -204,6 +203,60 @@ const createOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error while creating order",
+    });
+  }
+};
+
+const addOrderItem = async (req, res) => {
+  try {
+    const { orderId, items } = req.body;
+    console.log(orderId, items);
+
+    if (!orderId || !items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Order ID and at least one item are required",
+      });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    let addedAmount = 0;
+
+    items.forEach((item) => {
+      if (item._id && item.name && item.price && item.quantity) {
+        const total = item.price * item.quantity;
+        addedAmount += total;
+        order.items.push({
+          _id: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          total,
+        });
+      }
+    });
+
+    order.totalAmount += addedAmount;
+
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Items added to order successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Error adding items to order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while adding items to order",
     });
   }
 };
@@ -255,6 +308,34 @@ const closeOrder = async (req, res) => {
     });
   }
 };
+const getReservations = async (req, res) => {
+  try {
+    const { customerId } = req.query;
+
+    if (!customerId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Customer ID is required" });
+    }
+
+    const customer = await Customer.findById(customerId).populate("orders");
+
+    if (!customer) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Customer not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Reservations fetched successfully",
+      orders: customer.orders,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
 module.exports = {
   Phone,
@@ -264,5 +345,7 @@ module.exports = {
   getRestaurants,
   getRestaurantMenu,
   createOrder,
+  addOrderItem,
   closeOrder,
+  getReservations
 };

@@ -12,6 +12,8 @@ router.get("/restaurants", verifyTokenMiddleWare, customerController.getRestaura
 router.get('/restaurant-menu/:restaurantId', customerController.getRestaurantMenu);
 router.post("/reserve", verifyTokenMiddleWare, customerController.createOrder);
 router.get("/complete", verifyTokenMiddleWare, customerController.closeOrder);
+router.get("/reservations",verifyTokenMiddleWare, customerController.getReservations);
+router.post("/add-order-item", verifyTokenMiddleWare, customerController.addOrderItem);
 
-
-module.exports = router;
+  
+module.exports = router;    
