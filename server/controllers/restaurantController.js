@@ -550,6 +550,7 @@ const getTableStatus = async (req, res) => {
 };
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 const updateRestaurant = async (req, res) => {
   try {
     const { restaurantId, updatedRestaurant } = req.body;
@@ -667,6 +668,8 @@ const updateStatus = async (req, res) => {
     });
   }
 };
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
