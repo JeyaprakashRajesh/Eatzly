@@ -9,7 +9,7 @@ import { primary } from "../../utils/color";
 import HomeStack from "./components/HomeStack"
 import ExploreScreen from "./components/ExploreScreen";
 import ProfileScreen from "./components/ProfileScreen";
-import ReservationScreen from "./components/ReservationScreen";
+import ReservationStack from "./components/ReservationStack"
 import FavoritesScreen from "./components/FavoritesScreen";
 
 const Tab = createBottomTabNavigator();
@@ -158,7 +158,7 @@ export default function MainScreen({ setIsAuthenticated }) {
                 {() => <ExploreScreen data={data} />}
               </Tab.Screen>
               <Tab.Screen name="Reservations">
-                {() => <ReservationScreen data={data} />}
+                {() => <ReservationStack data={data} />}
               </Tab.Screen>
               <Tab.Screen name="Favorites">
                 {() => <FavoritesScreen data={data} />}

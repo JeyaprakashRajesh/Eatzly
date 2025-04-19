@@ -526,6 +526,11 @@ const getTableStatus = async (req, res) => {
       });
     }
 
+    const restaurantId = table.restaurantId;
+
+    // ✅ FIXED: await and lean()
+    const restaurant = await Restaurants.findById(restaurantId).lean();
+
     return res.status(200).json({
       success: true,
       message: "Table status fetched successfully",
@@ -536,6 +541,7 @@ const getTableStatus = async (req, res) => {
         capacity: table.capacity,
         createdAt: table.createdAt,
       },
+      restaurant, // now a plain object
     });
   } catch (err) {
     console.error("Get Table Status error:", err);
@@ -543,6 +549,7 @@ const getTableStatus = async (req, res) => {
   }
 };
 
+<<<<<<< Updated upstream
 const updateRestaurant = async (req, res) => {
   try {
     const { restaurantId, updatedRestaurant } = req.body;
@@ -660,6 +667,8 @@ const updateStatus = async (req, res) => {
     });
   }
 };
+=======
+>>>>>>> Stashed changes
 
 module.exports = {
   register,
