@@ -1,22 +1,89 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, FlatList, TextInput, Animated, ScrollView } from 'react-native';
-import { primary, lightgray2, lightgray, lightText, lightblack } from "../../../../utils/color";
+import React, { useRef, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Dimensions,
+  TouchableOpacity,
+  FlatList,
+  TextInput,
+  Animated,
+  ScrollView,
+} from "react-native";
+import {
+  primary,
+  lightgray2,
+  lightgray,
+  lightText,
+  lightblack,
+} from "../../../../utils/color";
+import Dosa from "../../../../assets/images/dosa.jpg"
+import Idli from "../../../../assets/images/idli.jpeg"
+import Vada from "../../../../assets/images/vada.jpg"
+import Uttapam from "../../../../assets/images/uttappam.png"
+import Pongal from "../../../../assets/images/ven-pongal.jpg"
+import Upma from "../../../../assets/images/upma.jpg"
+import Parotta from "../../../../assets/images/parotta.jpg"
+import Biriyani from "../../../../assets/images/biriyani.jpg"
+import Chappathi from "../../../../assets/images/chapati.jpeg"
+import Naan from "../../../../assets/images/naan.jpeg"
+
+
+
+
+
+
+
 
 const { height, width } = Dimensions.get("screen");
 
-const HomeScreen = ({ route, navigation  }) => {
-  const { data, restaurants, setSelectedRestaurant } = route.params;
+const HomeScreen = ({
+  navigation,
+  data,
+  restaurants,
+  setSelectedRestaurant,
+  location,
+  city,
+  address,
+}) => {
+  console.log("Home Screen", city, address);
   const [activeIndex, setActiveIndex] = useState(0);
   const [searchText, setSearchText] = useState("");
   const bannerRef = useRef(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   const CATEGORY_ITEM_WIDTH = 80;
+  console.log(restaurants[0].image);
 
-
+  // const categories = [
+  //   { name: "Dosa", imageUrl: Dosa },
+  //   { name: "Idli", imageUrl: Idli },
+  //   { name: "Vada", imageUrl: Vada },
+  //   { name: "Uttapam", imageUrl: Uttapam },
+  //   { name: "Pongal", imageUrl: Pongal },
+  //   { name: "Upma", imageUrl: Upma },
+  //   { name: "Parotta", imageUrl: Parotta },
+  //   { name: "Biriyani", imageUrl: Biriyani },
+  //   { name: "Chappathi", imageUrl: Chappathi },
+  //   { name: "Naan", imageUrl: Naan },
+  // ];
+  const categories = [
+    { name: "Dosa", imageUrl: require("../../../../assets/images/dosa.jpg") },
+    { name: "Idli", imageUrl: require("../../../../assets/images/idli.jpeg") },
+    { name: "Vada", imageUrl: require("../../../../assets/images/vada.jpg") },
+    { name: "Uttapam", imageUrl: require("../../../../assets/images/uttappam.png") },
+    { name: "Pongal", imageUrl: require("../../../../assets/images/ven-pongal.jpg") },
+    { name: "Upma", imageUrl: require("../../../../assets/images/upma.jpg") },
+    { name: "Parotta", imageUrl: require("../../../../assets/images/parotta.jpg") },
+    { name: "Biriyani", imageUrl: require("../../../../assets/images/biriyani.jpg") },
+    { name: "Chappathi", imageUrl: require("../../../../assets/images/chapati.jpeg") },
+    { name: "Naan", imageUrl: require("../../../../assets/images/naan.jpeg") },
+  ];
+  
   const banners = [
-    require("../../../../assets/images/bannerSample.png"),
-    require("../../../../assets/images/bannerSample.png"),
-    require("../../../../assets/images/bannerSample.png"),
+    require("../../../../assets/images/banner1.jpg"),
+    require("../../../../assets/images/banner2.jpg"),
+    require("../../../../assets/images/banner3.jpg"),
   ];
 
   const handleScroll = (event) => {
@@ -31,9 +98,7 @@ const HomeScreen = ({ route, navigation  }) => {
       bounces={false}
     >
       <View style={styles.headingContainer}>
-        <Text style={styles.headingText}>
-          EATZLY
-        </Text>
+        <Text style={styles.headingText}>EATZLY</Text>
         <TouchableOpacity>
           <Image
             source={require("../../../../assets/images/mani.png")}
@@ -55,7 +120,6 @@ const HomeScreen = ({ route, navigation  }) => {
             value={searchText}
             onChangeText={setSearchText}
             placeholderTextColor="#000"
-
           />
         </View>
         <TouchableOpacity style={styles.qrContainer}>
@@ -77,7 +141,11 @@ const HomeScreen = ({ route, navigation  }) => {
           onScroll={handleScroll}
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item }) => (
-            <Image source={item} style={styles.bannerImage} resizeMode="cover" />
+            <Image
+              source={item}
+              style={styles.bannerImage}
+              resizeMode="cover"
+            />
           )}
         />
         <View style={styles.pagination}>
@@ -86,7 +154,9 @@ const HomeScreen = ({ route, navigation  }) => {
               key={index}
               style={[
                 styles.dot,
-                { backgroundColor: activeIndex === index ? primary : lightgray2 }
+                {
+                  backgroundColor: activeIndex === index ? primary : lightgray2,
+                },
               ]}
             />
           ))}
@@ -101,10 +171,10 @@ const HomeScreen = ({ route, navigation  }) => {
               style={styles.locationIcon}
               resizeMode="contain"
             />
-            <Text style={styles.locationPlace}>Coimbatore</Text>
+            <Text style={styles.locationPlace}>{city}</Text>
           </View>
           <View style={styles.locationAddress}>
-            <Text style={styles.locationAddressText}>27, Adhava city, N.G pudur, G.N mills coimbatore</Text>
+            <Text style={styles.locationAddressText}>{address}</Text>
           </View>
         </View>
         <View style={styles.locationRightContainer}>
@@ -124,9 +194,7 @@ const HomeScreen = ({ route, navigation  }) => {
             style={styles.categoryDesign}
             resizeMode="contain"
           />
-          <Text style={styles.categoryHeaderText}>
-            Top Categories
-          </Text>
+          <Text style={styles.categoryHeaderText}>Top Categories</Text>
           <Image
             source={require("../../../../assets/images/right-design.png")}
             style={styles.categoryDesign}
@@ -134,38 +202,30 @@ const HomeScreen = ({ route, navigation  }) => {
           />
         </View>
         <FlatList
-          data={["Dosa",
-            "Idli",
-            "Vada",
-            "Uttapam",
-            "Pongal",
-            "Upma",
-            "Kerala Meals",
-            "Andhra Meals",
-            "Chettinad",
-            "South Indian Sweets"]}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={{ paddingHorizontal: 20 }}
-          bounces={false}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-            { useNativeDriver: false }
-          )}
-          renderItem={({ item }) => (
-            <View style={styles.categoryItem}>
-              <View style={styles.categoryIcon}>
-                <Image
-                  source={require("../../../../assets/images/category-icon.png")}
-                  style={styles.categoryImage}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.categoryText}>{item}</Text>
-            </View>
-          )}
+  data={categories}
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  keyExtractor={(item, index) => index.toString()}
+  contentContainerStyle={{ paddingHorizontal: 20 }}
+  bounces={false}
+  onScroll={Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    { useNativeDriver: false }
+  )}
+  renderItem={({ item }) => (
+    <View style={styles.categoryItem}>
+      <View style={styles.categoryIcon}>
+        <Image
+          source={item.imageUrl} // Now using the require path
+          style={styles.categoryImage}
+          resizeMode="cover"
         />
+      </View>
+      <Text style={styles.categoryText}>{item.name}</Text>
+    </View>
+  )}
+/>
+
         <View style={styles.scrollTrack}>
           <Animated.View
             style={[
@@ -187,51 +247,59 @@ const HomeScreen = ({ route, navigation  }) => {
       </View>
 
       <View style={styles.restaurantContainer}>
-        <Text style={styles.restaurantHeader}>
-          Recommended Restaurants
-        </Text>
-        {restaurants && restaurants.map((restaurant, index) => (
-          <TouchableOpacity key={index} style={styles.restaurantItem} onPress={()=>{
-            navigation.navigate("RestaurantDetails", { restaurant });
-          }}>
-            <View style={styles.detailsContainer}>
-              <View style={styles.restaurantImageContainer}>
-
-              </View>
-              <View style={styles.restaurantDetails}>
-                <Text style={styles.restaurantname}>{restaurant.name}</Text>
-                <View style={styles.restaurantType}>
-                  <Image 
-                    source={require("../../../../assets/images/veg.png")}
-                    style={styles.typeImage}
-                    resizeMode="contain"
-                  />
-                  <Image 
-                    source={require("../../../../assets/images/non-veg.png")}
-                    style={styles.typeImage}
-                    resizeMode="contain"
+        <Text style={styles.restaurantHeader}>Recommended Restaurants</Text>
+        {restaurants &&
+          restaurants.map((restaurant, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.restaurantItem}
+              onPress={() => {
+                navigation.navigate("RestaurantDetails", { restaurant });
+              }}
+            >
+              <View style={styles.detailsContainer}>
+                <View style={styles.restaurantImageContainer}>
+                  <Image
+                    source={require("../../../../assets/images/image.png")}
+                    style={styles.restaurantImage}
+                    resizeMode="cover"
                   />
                 </View>
-                <Text style={styles.restaurantAddress}><Text style={styles.restaurantAddressText}>{restaurant.city},{restaurant.state} - {restaurant.pincode}</Text></Text>
+                <View style={styles.restaurantDetails}>
+                  <Text style={styles.restaurantname}>{restaurant.name}</Text>
+                  <View style={styles.restaurantType}>
+                    <Image
+                      source={require("../../../../assets/images/veg.png")}
+                      style={styles.typeImage}
+                      resizeMode="contain"
+                    />
+                    <Image
+                      source={require("../../../../assets/images/non-veg.png")}
+                      style={styles.typeImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                  <Text style={styles.restaurantAddress}>
+                    <Text style={styles.restaurantAddressText}>
+                      {restaurant.city},{restaurant.state} -{" "}
+                      {restaurant.pincode}
+                    </Text>
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.restaurantRatingContainer}>
-              <Image 
-                source={require("../../../../assets/images/rating 5 star.png")}
-                style={styles.ratingImage}
-                resizeMode="contain"
-              />
-            </View>
-          </TouchableOpacity>
-        ))}
-
+              <View style={styles.restaurantRatingContainer}>
+                <Image
+                  source={require("../../../../assets/images/rating 5 star.png")}
+                  style={styles.ratingImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+          ))}
       </View>
-
-
     </ScrollView>
   );
 };
-
 
 const styles = StyleSheet.create({
   scrollContainer: {
@@ -240,14 +308,14 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "white"
+    backgroundColor: "white",
   },
   headingContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingTop: height * 0.01,
-    paddingHorizontal: width * 0.05
+    paddingHorizontal: width * 0.05,
   },
   headingText: {
     fontSize: width * 0.08,
@@ -259,9 +327,9 @@ const styles = StyleSheet.create({
     width: width * 0.08,
   },
   bannerContainer: {
-    height: height * 0.20,
+    height: height * 0.2,
     marginTop: height * 0.02,
-    marginRight: 25
+    marginRight: 25,
   },
   bannerImage: {
     width: width - 50,
@@ -288,7 +356,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: width * 0.05,
-    gap: width * 0.05
+    gap: width * 0.05,
   },
   searchbar: {
     flexDirection: "row",
@@ -297,12 +365,12 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     height: 50,
     paddingHorizontal: width * 0.04,
-    flex: 1
+    flex: 1,
   },
   searchIcon: {
     height: 20,
     width: 20,
-    marginRight: width * 0.04
+    marginRight: width * 0.04,
   },
   searchInput: {
     fontFamily: "montserrat-medium",
@@ -314,7 +382,7 @@ const styles = StyleSheet.create({
     backgroundColor: primary,
     borderRadius: 11,
     height: 50,
-    width: 140
+    width: 140,
   },
   qrIcon: {
     height: 30,
@@ -324,10 +392,8 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: "baloo-bold",
     color: "#fff",
-
   },
-  categoryContainer: {
-  },
+  categoryContainer: {},
   categoryItem: {
     alignItems: "center",
     marginRight: 20,
@@ -342,8 +408,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   categoryImage: {
-    width: 30,
-    height: 30,
+    width: 60,
+    height: 60,
+    borderRadius : 10
   },
   categoryText: {
     fontSize: 12,
@@ -356,7 +423,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginHorizontal: 20,
     borderRadius: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   scrollThumb: {
     height: 4,
@@ -393,7 +460,7 @@ const styles = StyleSheet.create({
   },
   locationLeftContainer: {
     flexDirection: "column",
-    flex: 1
+    flex: 1,
   },
   locationRightContainer: {
     alignItems: "center",
@@ -436,9 +503,9 @@ const styles = StyleSheet.create({
     fontSize: width * 0.045,
     color: lightText,
   },
-  restaurantItem : {
+  restaurantItem: {
     flexDirection: "row",
-    alignItems : "center",
+    alignItems: "center",
     justifyContent: "space-between",
     marginBottom: height * 0.02,
   },
@@ -448,45 +515,45 @@ const styles = StyleSheet.create({
     marginTop: height * 0.01,
   },
   restaurantImageContainer: {
-    width : width * 0.25,
-    height : 150,
-    backgroundColor: lightblack,
+    width: width * 0.25,
+    height: 150,
     borderRadius: 10,
   },
   restaurantDetails: {
     flexDirection: "column",
-    marginLeft : width * 0.03,
+    marginLeft: width * 0.03,
   },
   restaurantname: {
-    fontFamily : "baloo-bold",
+    fontFamily: "baloo-bold",
     fontSize: width * 0.05,
     color: "black",
   },
-  restaurantType :{
+  restaurantType: {
     flexDirection: "row",
-    gap : 10
+    gap: 10,
   },
-  typeImage : {
+  typeImage: {
     height: 20,
     width: 20,
   },
-  restaurantAddressText : {
-    fontFamily : "montserrat-medium",
+  restaurantAddressText: {
+    fontFamily: "montserrat-medium",
     fontSize: width * 0.03,
     color: lightText,
-    marginTop : 10
+    marginTop: 10,
   },
-  restaurantAddress : {
-    marginTop : 10
+  restaurantAddress: {
+    marginTop: 10,
   },
-  ratingImage : {
-    height : 50,
-    width : 60
-  }
-
-
-
-
+  ratingImage: {
+    height: 50,
+    width: 60,
+  },
+  restaurantImage: {
+    height : "100%",
+    width : "100%",
+    borderRadius : 20
+  },
 });
 
 export default HomeScreen;
