@@ -49,6 +49,7 @@ export default function Tables() {
     capacity: "",
   });
   const viewShotRef = useRef();
+  const QR_IP = "http://172.20.10.11:8000"
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -421,7 +422,7 @@ export default function Tables() {
                   style={styles.qrCode}
                 >
                   <QRCode
-                    value={`${API_URL}/api/restaurant/table/status/${selectedTable?._id}?token=${token}`}
+                    value={`${QR_IP}/api/restaurant/table/status/${selectedTable?._id}?token=${token}`}
                     size={hp("23%")}
                   />
                 </ViewShot>

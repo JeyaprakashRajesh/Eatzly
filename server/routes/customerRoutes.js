@@ -10,6 +10,8 @@ router.get("/customer-data", verifyTokenMiddleWare, customerController.getCustom
 router.put("/customer-data", verifyTokenMiddleWare, customerController.putCustomerDetails);
 router.get("/restaurants", verifyTokenMiddleWare, customerController.getRestaurants);
 router.get('/restaurant-menu/:restaurantId', customerController.getRestaurantMenu);
+router.post("/reserve", verifyTokenMiddleWare, customerController.createOrder);
+router.get("/complete", verifyTokenMiddleWare, customerController.closeOrder);
 
 
 module.exports = router;

@@ -33,9 +33,11 @@ const OrderSchema = new mongoose.Schema(
       enum: ["pending", "preparing", "served"],
       default: "pending",
     },
-    paymentId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" },
+    paymentId: { type: mongoose.Schema.Types.ObjectId, ref : "Payment" },
+    startTime: { type: Date, default: Date.now },
+    endTime: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true }          
 );
 
 module.exports = mongoose.model("Order", OrderSchema);
