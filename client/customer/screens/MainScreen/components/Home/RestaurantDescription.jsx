@@ -4,6 +4,11 @@ import { View, Text, StyleSheet, ScrollView, Image, Dimensions, TouchableOpacity
 import { primary, lightgray2, lightgray, lightText, lightblack } from "../../../../utils/color";
 import { BACKEND_URL } from "../../../../utils/routes";
 import axios from 'axios';
+import MapView, { Marker } from 'react-native-maps';
+import { Linking, Platform } from 'react-native';
+
+
+
 
 const { height, width } = Dimensions.get("screen");
 
@@ -40,6 +45,29 @@ const RestaurantDetails = ({ route, navigation }) => {
     }
     fetchMenu()
   }, [])
+  const openDirections = () => {
+    const { lat, lng } = restaurant.coordinates;
+  
+    // Google Maps URL scheme
+    const googleMapsUrl = `comgooglemaps://?daddr=${lat},${lng}`;
+    
+    // Apple Maps URL scheme
+    const appleMapsUrl = `http://maps.apple.com/?daddr=${lat},${lng}`;
+    
+    // Check if Google Maps is available on iOS, otherwise fall back to Apple Maps
+    Linking.canOpenURL('comgooglemaps://')
+      .then((supported) => {
+        const url = supported ? googleMapsUrl : appleMapsUrl;
+        Linking.openURL(url).catch((err) => console.error("Error opening maps:", err));
+      })
+      .catch((err) => {
+        // If there's an error checking for Google Maps, just try Apple Maps
+        console.error("Error checking for Google Maps:", err);
+        Linking.openURL(appleMapsUrl).catch((err) => console.error("Error opening Apple Maps:", err));
+      });
+  };
+  
+  
   return (
     <ScrollView
       contentContainerStyle={styles.container}
@@ -58,6 +86,11 @@ const RestaurantDetails = ({ route, navigation }) => {
         <View style={styles.topInnerContainer}>
           <View style={styles.detailsContainer}>
             <View style={styles.restaurantImageContainer}>
+              <Image
+                                  source={require("../../../../assets/images/image.png")}
+                                  style={styles.restaurantImage}
+                                  resizeMode="cover"
+                                />
             </View>
             <View style={styles.restaurantDetails}>
               <Text style={styles.restaurantname}>{restaurant.name}</Text>
@@ -119,16 +152,38 @@ const RestaurantDetails = ({ route, navigation }) => {
         />
       </View>
       <View style={styles.mapContainer}>
-      </View>
+  {restaurant?.coordinates?.lat && restaurant?.coordinates?.lng && (
+    <MapView
+      style={StyleSheet.absoluteFillObject}
+      initialRegion={{
+        latitude: restaurant.coordinates.lat,
+        longitude: restaurant.coordinates.lng,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }}
+    >
+      <Marker
+        coordinate={{
+          latitude: restaurant.coordinates.lat,
+          longitude: restaurant.coordinates.lng,
+        }}
+        title={restaurant.name}
+        description={`${restaurant.city}, ${restaurant.state}`}
+      />
+    </MapView>
+  )}
+</View>
+
       <View style={styles.directionsContainer}>
-        <TouchableOpacity style={styles.directionsButton}>
-          <Image
-            source={require("../../../../assets/images/directions.png")}
-            style={styles.directionsImage}
-            resizeMode="contain"
-          />
-          <Text style={styles.directionsText}>Get Directions</Text>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={openDirections} style={styles.directionsButton}>
+  <Image
+    source={require("../../../../assets/images/directions.png")}
+    style={styles.directionsImage}
+    resizeMode="contain"
+  />
+  <Text style={styles.directionsText}>Get Directions</Text>
+</TouchableOpacity>
+
         <View style={styles.status}>
           <Text style={styles.statusText}><Text style={{ color: "green" }}>Opened</Text> closes by 10pm</Text>
         </View>
@@ -235,7 +290,6 @@ const styles = StyleSheet.create({
   restaurantImageContainer: {
     width: width * 0.25,
     height: 150,
-    backgroundColor: lightblack,
     borderRadius: 10,
   },
   restaurantDetails: {
@@ -421,7 +475,19 @@ const styles = StyleSheet.create({
     fontSize: width * 0.06,
     color: "black",
     marginTop: 10
-  }
+  },
+  mapContainer: {
+    marginHorizontal: width * 0.05,
+    height: 150,
+    borderRadius: 20,
+    overflow: 'hidden', // to clip the rounded corners
+  },
+  restaurantImage: {
+    height : "100%",
+    width : "100%",
+    borderRadius : 20
+  },
+  
 
 
 
