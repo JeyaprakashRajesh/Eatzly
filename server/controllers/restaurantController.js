@@ -1,6 +1,7 @@
 const Restaurants = require("../models/restaurantScema");
 const Menu = require("../models/menuSchema");
 const Table = require("../models/tableSchema");
+const Order = require("../models/orderSchema");
 
 const { generateToken, verifyToken } = require("../utils/jwt");
 
@@ -528,7 +529,6 @@ const getTableStatus = async (req, res) => {
 
     const restaurantId = table.restaurantId;
 
-    // ✅ FIXED: await and lean()
     const restaurant = await Restaurants.findById(restaurantId).lean();
 
     return res.status(200).json({
@@ -541,7 +541,7 @@ const getTableStatus = async (req, res) => {
         capacity: table.capacity,
         createdAt: table.createdAt,
       },
-      restaurant, // now a plain object
+      restaurant,
     });
   } catch (err) {
     console.error("Get Table Status error:", err);
@@ -667,6 +667,40 @@ const updateStatus = async (req, res) => {
   }
 };
 
+const getAllOrders = async (req, res) => {
+  try {
+    const { restaurantId } = req.query;
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        success: false,
+        message: "restaurantId is required",
+      });
+    }
+
+    const orders = await Order.find({ restaurantId })
+      .populate("tableId")
+      .populate("customerId")
+      .populate({
+        path: "items._id", 
+        select: "name price category image", 
+      });
+
+
+    return res.status(200).json({
+      success: true,
+      message: "Orders fetched successfully",
+      orders,
+    });
+  } catch (err) {
+    console.error("Get All Orders error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching orders",
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -683,4 +717,5 @@ module.exports = {
   updateRestaurant,
   updateRestaurantProfile,
   updateStatus,
+  getAllOrders,
 };

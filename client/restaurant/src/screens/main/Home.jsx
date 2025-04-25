@@ -7,58 +7,71 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  RefreshControl,
+  Modal,
+  ScrollView,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import colors from "@/constants/colors";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { Bell, InfoIcon } from "lucide-react-native";
+import { Bell, InfoIcon, X } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import LinkIcon from "../../../assets/icons/icon-park_share.png";
 import TableIcon from "../../../assets/images/table-icon.png";
-import { handleUpdateRestaurantStatus } from "@/services/restaurantOperations";
+import {
+  handleGetAllOrders,
+  handleGetAllTables,
+  handleUpdateRestaurantStatus,
+} from "@/services/restaurantOperations";
 
 export default function Home() {
   const restaurant = useSelector((state) => state.restaurant.restaurant);
   const dispatch = useDispatch();
-  const id = useSelector((state) => state.auth.id);
-  const token = useSelector((state) => state.auth.token);
+  const { id, token } = useSelector((state) => state.auth);
+  const orders = useSelector((state) => state.restaurant.orders);
+  const ttables = useSelector((state) => state.restaurant.tables);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showItems, setShowItems] = useState(false);
   const [open, setOpen] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const ordersCompleted = 5;
   const todayRevenue = 1000;
   const monthlyRevenue = 10000;
-  const tables = 10;
+  const [tables, setTables] = useState(ttables.length);
   const totalTables = 100;
+  const occupiedTables = ttables.filter(
+    (table) => table.status === "occupied"
+  ).length;
 
-  const liveOrder = [
-    {
-      id: 1,
-      name: "John Doe",
-      amount: 400,
-      quantity: 3,
-      pending: 5,
-      table: "A",
-    },
-    {
-      id: 2,
-      name: "Jane Doe",
-      amount: 156,
-      quantity: 3,
-      pending: 1,
-      table: "B",
-    },
-    {
-      id: 3,
-      name: "John Doe",
-      amount: 400,
-      quantity: 3,
-      pending: 5,
-      table: "C",
-    },
-  ];
+  console.log(orders);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      await handleGetAllOrders(id, token, dispatch);
+      setLoading(false);
+    };
+    fetchOrders();
+  }, [id, token, dispatch]);
+
+  useEffect(() => {
+    const fetchTables = async () => {
+      await handleGetAllTables(id, token, dispatch);
+    };
+    fetchTables();
+  }, [id, token, dispatch]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await handleGetAllOrders(id, token, dispatch);
+    setRefreshing(false);
+  };
+
+  const liveOrder = orders.filter((order) => order.status === "pending");
 
   const updateStatus = async () => {
     if (open) {
@@ -86,47 +99,67 @@ export default function Home() {
     }
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.liveOrderItem}>
-      <View style={styles.tableNameContainer}>
-        <Image source={TableIcon} style={styles.tableIcon} />
-        <Text style={styles.tableName}>{item.table}</Text>
+  const renderItem = ({ item }) => {
+    // Count pending items
+    const pendingItemsCount = item.items.filter(
+      (menuItem) => !menuItem.completed
+    ).length;
+
+    return (
+      <View style={styles.liveOrderItem}>
+        <View style={styles.tableNameContainer}>
+          <Image source={TableIcon} style={styles.tableIcon} />
+          <Text style={styles.tableName}>{item.tableId.tableName}</Text>
+        </View>
+        <View style={styles.liveOrderItemDetails}>
+          <View style={styles.liveOrderItemRow}>
+            <View style={styles.liveOrderItemRowItem}>
+              <Text style={styles.liveOrderItemRowItemLabel}>Name:</Text>
+              <Text style={styles.liveOrderItemRowItemValue}>
+                {item.customerId.username}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.liveOrderItemRow}>
+            <View style={styles.liveOrderItemRowItem}>
+              <Text style={styles.liveOrderItemRowItemLabel}>Amount:</Text>
+              <Text style={styles.liveOrderItemRowItemValue}>
+                ₹{item.totalAmount}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.liveOrderItemRow}>
+            <View style={styles.liveOrderItemRowItem}>
+              <Text style={styles.liveOrderItemRowItemLabel}>Qty:</Text>
+              <Text style={styles.liveOrderItemRowItemValue}>
+                {item.items.length}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.liveOrderItemRow}>
+            <View style={styles.liveOrderItemRowItem}>
+              <Text style={styles.liveOrderItemRowItemLabel}>Pending:</Text>
+              <Text style={styles.liveOrderItemRowItemValue}>
+                {pendingItemsCount}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.infoIconContainer}>
+          <TouchableOpacity
+            style={styles.infoIcon}
+            onPress={() => {
+              setSelectedOrder(item);
+              setShowItems(false);
+              setModalVisible(true);
+            }}
+          >
+            <InfoIcon size={hp("2.6%")} color={"#707070"} />
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.liveOrderItemDetails}>
-        <View style={styles.liveOrderItemRow}>
-          <View style={styles.liveOrderItemRowItem}>
-            <Text style={styles.liveOrderItemRowItemLabel}>Name:</Text>
-            <Text style={styles.liveOrderItemRowItemValue}>{item.name}</Text>
-          </View>
-        </View>
-        <View style={styles.liveOrderItemRow}>
-          <View style={styles.liveOrderItemRowItem}>
-            <Text style={styles.liveOrderItemRowItemLabel}>Amount:</Text>
-            <Text style={styles.liveOrderItemRowItemValue}>₹{item.amount}</Text>
-          </View>
-        </View>
-        <View style={styles.liveOrderItemRow}>
-          <View style={styles.liveOrderItemRowItem}>
-            <Text style={styles.liveOrderItemRowItemLabel}>Qty:</Text>
-            <Text style={styles.liveOrderItemRowItemValue}>
-              {item.quantity}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.liveOrderItemRow}>
-          <View style={styles.liveOrderItemRowItem}>
-            <Text style={styles.liveOrderItemRowItemLabel}>Pending:</Text>
-            <Text style={styles.liveOrderItemRowItemValue}>{item.pending}</Text>
-          </View>
-        </View>
-      </View>
-      <View style={styles.infoIconContainer}>
-        <TouchableOpacity style={styles.infoIcon}>
-          <InfoIcon size={hp("2.6%")} color={"#707070"} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.container}>
@@ -193,9 +226,11 @@ export default function Home() {
               <View style={styles.infoCardBodyRowItem}>
                 <View style={styles.bulletCircle} />
                 <Text style={styles.infoCardBodyRowItemLabel}>Tables:</Text>
-                <Text style={styles.infoCardBodyRowItemValue}>
-                  {tables} / {totalTables}
-                </Text>
+                <View style={styles.infoCardBodyRowItem}>
+                  <Text style={styles.infoCardBodyRowItemValue}>
+                    {occupiedTables} / {tables}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -234,16 +269,132 @@ export default function Home() {
         <View style={styles.liveOrdersBody}>
           <FlatList
             data={liveOrder}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item._id.toString()}
             renderItem={renderItem}
-            contentContainerStyle={{
-              flexGrow: 1,
-              height: hp("40%"),
-            }}
+            contentContainerStyle={{ flexGrow: 1 }}
             ItemSeparatorComponent={() => <View style={{ height: hp("1%") }} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
+            }
           />
         </View>
       </View>
+      <Modal visible={modalVisible} transparent>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              width: "90%",
+              backgroundColor: "#fff",
+              padding: 20,
+              borderRadius: 10,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text style={styles.logoText}>Order Details</Text>
+              <X
+                onPress={() => {
+                  setSelectedOrder(null);
+                  setModalVisible(false);
+                }}
+                color={"#ccc"}
+                size={hp("3%")}
+              />
+            </View>
+            <ScrollView style={{ marginTop: 10 }}>
+              <Text style={styles.orderCell}>
+                Customer: {selectedOrder?.customerId?.username}
+              </Text>
+              <Text style={styles.orderCell}>
+                Table: {selectedOrder?.tableId?.tableName}
+              </Text>
+              <Text style={styles.orderCell}>
+                Total: ₹{selectedOrder?.totalAmount}
+              </Text>
+              <Text style={styles.orderCell}>
+                Status: {selectedOrder?.status}
+              </Text>
+              <Text style={styles.orderCell}>
+                Time:{" "}
+                {new Date(selectedOrder?.startTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+              <Text style={styles.orderCell}>
+                Items: {selectedOrder?.items?.length}
+              </Text>
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setShowItems(!showItems)}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  textAlign: "center",
+                  fontFamily: "Montserrat-SemiBold",
+                }}
+              >
+                {showItems ? "Hide Items" : "View Items"}
+              </Text>
+            </TouchableOpacity>
+            {showItems && (
+              <ScrollView style={{ marginTop: 10 }}>
+                {selectedOrder?.items?.map((item, index) => (
+                  <View
+                    key={`${item._id}-${index}`}
+                    style={{
+                      marginBottom: hp("1%"),
+                      borderColor: "#ccc",
+                      borderBottomWidth: 1,
+                      paddingBottom: hp("0.7%"),
+                    }}
+                  >
+                    <Text style={styles.orderCell}>
+                      {index + 1}. {item.name}
+                    </Text>
+                    <Text style={styles.orderCell}>Price: ₹{item.price}</Text>
+                    <Text style={styles.orderCell}>
+                      Quantity: {item.quantity}
+                    </Text>
+                    <Text style={styles.orderCell}>Total: ₹{item.total}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  textAlign: "center",
+                  fontFamily: "Montserrat-SemiBold",
+                }}
+              >
+                Close
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -422,5 +573,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: wp("2.6%"),
     top: hp("1.2%"),
+  },
+  orderCell: {
+    fontFamily: "Montserrat-Medium",
+    fontSize: hp("1.8%"),
+    marginBottom: hp("0.5%"),
   },
 });
