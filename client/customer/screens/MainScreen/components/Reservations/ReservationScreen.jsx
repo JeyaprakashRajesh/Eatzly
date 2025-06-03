@@ -90,6 +90,7 @@ const ReservationScreen = ({ route, navigation }) => {
         ) : (
           <FlatList
             data={reservations}
+            showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item._id}
             renderItem={renderItem}
             refreshControl={
@@ -151,6 +152,12 @@ const styles = StyleSheet.create({
     fontFamily: "montserrat-semibold",
     fontSize: width * 0.045,
     marginBottom: 5,
+  },
+  reservationContainer: {
+    flex: 1, // ✅ Make this fill the remaining space and scroll
+    width: width,
+    paddingHorizontal: width * 0.05,
+    paddingTop: height * 0.015,
   },
 });
 

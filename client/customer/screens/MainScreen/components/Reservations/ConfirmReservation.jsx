@@ -26,12 +26,12 @@ export default function ConformReservation({ route, navigation }) {
     const fetchReserveDetails = async () => {
       try {
         const token = await AsyncStorage.getItem("token");
-        if (!token) {
+        if (!token) { 
           console.log("No token found");
           return;
         }
 
-        const response = await axios.get(dummyqr, {
+        const response = await axios.get(qr, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -70,7 +70,7 @@ export default function ConformReservation({ route, navigation }) {
         }
       );
       console.log("Response:", response.data);
-      if(response.success){
+      if(response.data.success){
         navigation.navigate("Reservations");
       }
     } catch (err) {
