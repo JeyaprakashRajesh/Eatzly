@@ -218,9 +218,9 @@ export default function MainScreen({ setIsAuthenticated }) {
           <Tab.Screen name="Reservations">
             {() => <ReservationStack data={data} />}
           </Tab.Screen>
-          <Tab.Screen name="Favorites">
+          {/* <Tab.Screen name="Favorites">
             {() => <FavoritesScreen data={data} />}
-          </Tab.Screen>
+          </Tab.Screen> */}
           <Tab.Screen name="Profile">
             {() => <ProfileScreen data={data} />}
           </Tab.Screen>
