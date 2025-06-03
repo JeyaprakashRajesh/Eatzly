@@ -44,11 +44,19 @@ export default function Home() {
   const monthlyRevenue = 10000;
   const [tables, setTables] = useState(ttables.length);
   const totalTables = 100;
-  const occupiedTables = ttables.filter(
-    (table) => table.status === "occupied"
-  ).length;
+  const [occupiedTables, setOccupiedTables] = useState(0);
 
-  console.log(orders);
+  useEffect(() => {
+    if (ttables) {
+      setTables(ttables.length);
+      const temp =ttables.filter((table)=>{
+        if(table.status==="occupied"){
+          return true
+        }
+      }).length;
+      setOccupiedTables(temp);
+    }
+  }, [ttables]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -511,6 +519,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: wp("1%"),
     opacity: 0.5,
+  },
+  liveOrdersBody:{
+    height:hp("38%")
   },
   liveOrdersHeaderText: {
     fontFamily: "Montserrat-SemiBoldItalic",

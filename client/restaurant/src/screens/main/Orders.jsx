@@ -169,10 +169,14 @@ const Orders = () => {
                   Status: {selectedOrder?.status}
                 </Text>
                 <Text style={styles.orderCell}>
-                  Time:{" "}
-                  {new Date(selectedOrder?.startTime).toLocaleTimeString([], {
+                  Date:{" "}
+                  {new Date(selectedOrder?.startTime).toLocaleDateString([], {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
+                    second: "2-digit",
                   })}
                 </Text>
                 <Text style={styles.orderCell}>
@@ -183,7 +187,13 @@ const Orders = () => {
                 style={styles.modalButton}
                 onPress={() => setShowItems(!showItems)}
               >
-                <Text style={{ color: "#fff", textAlign: "center",fontFamily:"Montserrat-SemiBold" }}>
+                <Text
+                  style={{
+                    color: "#fff",
+                    textAlign: "center",
+                    fontFamily: "Montserrat-SemiBold",
+                  }}
+                >
                   {showItems ? "Hide Items" : "View Items"}
                 </Text>
               </TouchableOpacity>
@@ -199,9 +209,13 @@ const Orders = () => {
                         paddingBottom: hp("0.7%"),
                       }}
                     >
-                      <Text style={styles.orderCell}>{index + 1}. {item.name}</Text>
+                      <Text style={styles.orderCell}>
+                        {index + 1}. {item.name}
+                      </Text>
                       <Text style={styles.orderCell}>Price: ₹{item.price}</Text>
-                      <Text style={styles.orderCell}>Quantity: {item.quantity}</Text>
+                      <Text style={styles.orderCell}>
+                        Quantity: {item.quantity}
+                      </Text>
                       <Text style={styles.orderCell}>Total: ₹{item.total}</Text>
                     </View>
                   ))}
@@ -211,7 +225,13 @@ const Orders = () => {
                 style={styles.modalButton}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={{ color: "#fff", textAlign: "center",fontFamily:"Montserrat-SemiBold" }}>
+                <Text
+                  style={{
+                    color: "#fff",
+                    textAlign: "center",
+                    fontFamily: "Montserrat-SemiBold",
+                  }}
+                >
                   Close
                 </Text>
               </TouchableOpacity>

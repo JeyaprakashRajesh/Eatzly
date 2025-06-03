@@ -49,7 +49,7 @@ export default function Tables() {
     capacity: "",
   });
   const viewShotRef = useRef();
-  const QR_IP = "http://172.20.10.11:8000"
+  const QR_IP = "http://172.20.10.2:8000"
 
   useEffect(() => {
     if (searchQuery.trim() === "") {

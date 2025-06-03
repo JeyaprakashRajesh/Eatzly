@@ -83,10 +83,13 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
+    console.log("🔁 Login controller invoked");
+
     const { phone, otp } = req.body;
-    console.log(phone, otp);
+    console.log("📥 Request body:", { phone, otp });
 
     if (!phone) {
+      console.warn("⚠️ Phone number missing");
       return res.status(400).json({
         success: false,
         message: "Phone number is required",
@@ -94,7 +97,10 @@ const login = async (req, res) => {
     }
 
     const restaurant = await Restaurants.findOne({ phone });
+    console.log("🔍 Restaurant lookup result:", restaurant);
+
     if (!restaurant) {
+      console.warn("❌ Restaurant not found");
       return res.status(404).json({
         success: false,
         message: "Restaurant not found",
@@ -102,6 +108,7 @@ const login = async (req, res) => {
     }
 
     if (!otp || (Array.isArray(otp) && otp.some((d) => d.trim() === ""))) {
+      console.log("🧾 Generating OTP");
       const generatedOtp = Math.floor(
         100000 + Math.random() * 900000
       ).toString();
@@ -119,9 +126,11 @@ const login = async (req, res) => {
       });
     }
 
+    console.log("🔍 Validating OTP...");
     const storedOtp = restaurant.otp;
 
     if (!storedOtp || !storedOtp.code || !storedOtp.createdAt) {
+      console.warn("⚠️ OTP was not generated or has been cleared.");
       return res.status(401).json({
         success: false,
         message: "No OTP generated or already used.",
@@ -132,7 +141,14 @@ const login = async (req, res) => {
     const otpCreatedTime = new Date(storedOtp.createdAt);
     const otpIsExpired = currentTime - otpCreatedTime > 5 * 60 * 1000;
 
+    console.log("🕒 OTP comparison:", {
+      inputOtp: otp,
+      storedOtp: storedOtp.code,
+      expired: otpIsExpired,
+    });
+
     if (storedOtp.code !== (Array.isArray(otp) ? otp.join("") : otp)) {
+      console.warn("❌ Incorrect OTP entered");
       return res.status(401).json({
         success: false,
         message: "Incorrect OTP",
@@ -140,11 +156,14 @@ const login = async (req, res) => {
     }
 
     if (otpIsExpired) {
+      console.warn("⌛ OTP has expired");
       return res.status(401).json({
         success: false,
         message: "OTP has expired. Please request a new one.",
       });
     }
+
+    console.log("✅ OTP validated. Logging in...");
 
     restaurant.otp = undefined;
     await restaurant.save();
@@ -154,6 +173,8 @@ const login = async (req, res) => {
       role: "restaurant",
     });
 
+    console.log("🎫 Token generated:", token);
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -161,7 +182,7 @@ const login = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("💥 Login error:", error);
     res.status(500).json({
       success: false,
       message: "An error occurred during login",
@@ -682,10 +703,9 @@ const getAllOrders = async (req, res) => {
       .populate("tableId")
       .populate("customerId")
       .populate({
-        path: "items._id", 
-        select: "name price category image", 
+        path: "items._id",
+        select: "name price category image",
       });
-
 
     return res.status(200).json({
       success: true,
