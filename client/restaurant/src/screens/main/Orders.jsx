@@ -5,8 +5,11 @@ import {
   Keyboard,
   Touchable,
   TouchableOpacity,
+  ActivityIndicator,
+  Modal,
+  ScrollView,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import colors from "@/constants/colors";
 import {
@@ -15,45 +18,8 @@ import {
 } from "react-native-responsive-screen";
 import { FlatList, TextInput } from "react-native-gesture-handler";
 import { ArrowDownUp, Info, Search } from "lucide-react-native";
-
-const orders = [
-  {
-    id: 1,
-    name: "Ramesh K",
-    amount: 650,
-    quantity: 3,
-    pending: 5,
-    table: "A",
-    date: "2025-02-22T10:34:00Z",
-  },
-  {
-    id: 2,
-    name: "Ramesh K",
-    amount: 650,
-    quantity: 3,
-    pending: 5,
-    table: "B",
-    date: "2025-02-22T10:34:00Z",
-  },
-  {
-    id: 3,
-    name: "Ramesh K",
-    amount: 650,
-    quantity: 3,
-    pending: 5,
-    table: "C",
-    date: "2025-02-21T10:34:00Z",
-  },
-  {
-    id: 4,
-    name: "Ramesh K",
-    amount: 650,
-    quantity: 3,
-    pending: 5,
-    table: "D",
-    date: "2025-02-21T10:34:00Z",
-  },
-];
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllOrders } from "@/services/restaurantOperations";
 
 const groupByDate = (data) => {
   return data.reduce((acc, order) => {
@@ -66,26 +32,47 @@ const groupByDate = (data) => {
 
 const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showItems, setShowItems] = useState(false);
+  const dispatch = useDispatch();
+  const { id, token } = useSelector((state) => state.auth);
+  const orders = useSelector((state) => state.restaurant.orders);
   const filteredOrders = orders.filter((order) => {
-    const lowerQuery = searchQuery.toLowerCase();
-    const formattedDate = new Date(order.date)
+    const lowerQuery = searchQuery?.toLowerCase();
+    const formattedDate = new Date(order.date || "")
       .toLocaleDateString("en-GB")
       .toLowerCase();
     return (
-      order.name.toLowerCase().includes(lowerQuery) ||
-      order.table.toLowerCase().includes(lowerQuery) ||
-      order.amount.toString().includes(lowerQuery) ||
+      order.name?.toLowerCase().includes(lowerQuery) ||
+      order.table?.toLowerCase().includes(lowerQuery) ||
+      order.amount?.toString().includes(lowerQuery) ||
       formattedDate.includes(lowerQuery)
     );
   });
   const groupedOrders = groupByDate(filteredOrders);
   const dateKeys = Object.keys(groupedOrders);
 
+  useEffect(() => {
+    const fetchOrders = async () => {
+      await handleGetAllOrders(id, token, dispatch);
+      setLoading(false);
+    };
+    fetchOrders();
+  }, [id, token, dispatch]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.container}>
-      <View
-        style={styles.header}
-      >
+      <View style={styles.header}>
         <Text style={styles.logoText}>Orders</Text>
       </View>
       <View style={styles.seperator}></View>
@@ -114,28 +101,35 @@ const Orders = () => {
         </View>
         <FlatList
           data={dateKeys}
-          keyExtractor={(item) => item}
+          keyExtractor={(item, index) => `${item._id}-${index}`}
           renderItem={({ item: date }) => (
             <View style={styles.dateGroupWrapper}>
               <View style={styles.dateHeaderRow}>
-                <Text style={styles.dateHeader}>{date}</Text>
+                <Text style={styles.dateHeader}>{"19.4.2025"}</Text>
                 <Text style={styles.dateHeaderCount}>
                   {groupedOrders[date].length} orders
                 </Text>
               </View>
               {groupedOrders[date].map((order, index) => (
-                <View style={styles.orderRow} key={order.id}>
+                <View style={styles.orderRow} key={order._id}>
                   <Text style={styles.orderCell}>{index + 1}.</Text>
-                  <Text style={styles.orderCell}>{order.name}</Text>
-                  <Text style={styles.orderCell}>{order.table}</Text>
-                  <Text style={styles.orderCell}>₹{order.amount}</Text>
                   <Text style={styles.orderCell}>
-                    {new Date(order.date).toLocaleTimeString([], {
+                    {order.customerId?.username || "N/A"}
+                  </Text>
+                  <Text style={styles.orderCell}>₹{order.totalAmount}</Text>
+                  <Text style={styles.orderCell}>
+                    {new Date(order.startTime).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </Text>
-                  <TouchableOpacity style={styles.infoIconContainer}>
+                  <TouchableOpacity
+                    style={styles.infoIconContainer}
+                    onPress={() => {
+                      setSelectedOrder(order);
+                      setModalVisible(true);
+                    }}
+                  >
                     <Info size={hp("2.6%")} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
@@ -143,6 +137,87 @@ const Orders = () => {
             </View>
           )}
         />
+        <Modal visible={modalVisible} transparent>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                width: "90%",
+                backgroundColor: "#fff",
+                padding: 20,
+                borderRadius: 10,
+              }}
+            >
+              <Text style={styles.logoText}>Order Details</Text>
+              <ScrollView style={{ marginTop: 10 }}>
+                <Text style={styles.orderCell}>
+                  Customer: {selectedOrder?.customerId?.username}
+                </Text>
+                <Text style={styles.orderCell}>
+                  Table: {selectedOrder?.tableId?.tableName}
+                </Text>
+                <Text style={styles.orderCell}>
+                  Total: ₹{selectedOrder?.totalAmount}
+                </Text>
+                <Text style={styles.orderCell}>
+                  Status: {selectedOrder?.status}
+                </Text>
+                <Text style={styles.orderCell}>
+                  Time:{" "}
+                  {new Date(selectedOrder?.startTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+                <Text style={styles.orderCell}>
+                  Items: {selectedOrder?.items?.length}
+                </Text>
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowItems(!showItems)}
+              >
+                <Text style={{ color: "#fff", textAlign: "center",fontFamily:"Montserrat-SemiBold" }}>
+                  {showItems ? "Hide Items" : "View Items"}
+                </Text>
+              </TouchableOpacity>
+              {showItems && (
+                <ScrollView style={{ marginTop: 10 }}>
+                  {selectedOrder?.items?.map((item, index) => (
+                    <View
+                      key={`${item._id}-${index}`}
+                      style={{
+                        marginBottom: hp("1%"),
+                        borderColor: "#ccc",
+                        borderBottomWidth: 1,
+                        paddingBottom: hp("0.7%"),
+                      }}
+                    >
+                      <Text style={styles.orderCell}>{index + 1}. {item.name}</Text>
+                      <Text style={styles.orderCell}>Price: ₹{item.price}</Text>
+                      <Text style={styles.orderCell}>Quantity: {item.quantity}</Text>
+                      <Text style={styles.orderCell}>Total: ₹{item.total}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={{ color: "#fff", textAlign: "center",fontFamily:"Montserrat-SemiBold" }}>
+                  Close
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -234,6 +309,14 @@ const styles = StyleSheet.create({
     borderBottomColor: "rgba(204, 204, 204, 0.3)",
     paddingBottom: hp("1%"),
     marginBottom: hp("1%"),
+  },
+  modalButton: {
+    backgroundColor: colors.primary,
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 15,
+    fontFamily: "Montserrat-SemiBold",
+    textAlign: "center",
   },
 });
 

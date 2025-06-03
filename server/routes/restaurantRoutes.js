@@ -56,5 +56,6 @@ router.put(
 );
 
 router.get("/table/status/:tableId", restaurantController.getTableStatus);
+router.get("/orders", verifyTokenMiddleWare, restaurantController.getAllOrders)
 
 module.exports = router;
